@@ -1000,10 +1000,10 @@ This library includes the former libraries ribcon.lbr and ribcon4.lbr.&lt;p&gt;
 <wire x1="91.44" y1="109.22" x2="101.6" y2="109.22" width="0.1524" layer="91"/>
 <label x="91.44" y="109.474" size="1.6764" layer="95"/>
 <wire x1="101.6" y1="109.22" x2="101.6" y2="147.32" width="0.1524" layer="91"/>
-<wire x1="101.6" y1="147.32" x2="182.88" y2="147.32" width="0.1524" layer="91"/>
+<wire x1="101.6" y1="147.32" x2="180.34" y2="147.32" width="0.1524" layer="91"/>
 <label x="157.48" y="147.32" size="1.778" layer="95"/>
-<pinref part="U$1" gate="G$1" pin="D6"/>
-<wire x1="182.88" y1="147.32" x2="182.88" y2="134.62" width="0.1524" layer="91"/>
+<pinref part="U$1" gate="G$1" pin="D7"/>
+<wire x1="180.34" y1="147.32" x2="180.34" y2="134.62" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="C" class="0">
@@ -1048,10 +1048,10 @@ This library includes the former libraries ribcon.lbr and ribcon4.lbr.&lt;p&gt;
 <wire x1="76.2" y1="109.22" x2="66.04" y2="109.22" width="0.1524" layer="91"/>
 <label x="68.58" y="109.474" size="1.6764" layer="95"/>
 <wire x1="66.04" y1="109.22" x2="66.04" y2="152.4" width="0.1524" layer="91"/>
-<wire x1="66.04" y1="152.4" x2="180.34" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="66.04" y1="152.4" x2="182.88" y2="152.4" width="0.1524" layer="91"/>
 <label x="162.56" y="152.4" size="1.778" layer="95"/>
-<pinref part="U$1" gate="G$1" pin="D7"/>
-<wire x1="180.34" y1="152.4" x2="180.34" y2="134.62" width="0.1524" layer="91"/>
+<pinref part="U$1" gate="G$1" pin="D6"/>
+<wire x1="182.88" y1="152.4" x2="182.88" y2="134.62" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="G1" class="0">

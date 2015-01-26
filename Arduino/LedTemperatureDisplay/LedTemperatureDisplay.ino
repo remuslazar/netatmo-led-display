@@ -1,14 +1,9 @@
 #include "LEDDisplay.h"
 #include <Adafruit_GFX.h>
 
-#define DEBUG 1
+#define DEBUG
 
-// LEDDisplay(     A, B,C,D, L,S, EN,R1,R2,G1,G2);
-LEDDisplay display(9,10,8,6, 1,0,  7, 5, 3, 4, 2);
-
-#ifdef DEBUG
-static long lines = 0;
-#endif
+LEDDisplay display;
 
 void setup() {
 

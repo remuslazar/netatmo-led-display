@@ -1,140 +1,142 @@
 #include "LEDDisplay.h"
 #include "Arduino.h"
+#include "cie1931.h"
+#include <avr/pgmspace.h>
+#include "Hardware.h" // load hardware pin/port mapping
 
-// for performance reasons, the clock pin is only semi-configurable
-#define SCLKPORT PORTB
-#define DATAPORT
+static LEDDisplay *self = NULL;
 
-static LEDDisplay *activeDisplay = NULL;
+// returns the psychometric corrected pwm value(0-255) for the given brightness in % (0-100)
+int ciePWM(byte percentage) {
+	return pgm_read_byte_near(cie + constrain(percentage,0,100));
+}
 
-LEDDisplay::LEDDisplay(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
-                       uint8_t l, uint8_t s, uint8_t oe,
-                       uint8_t r1, uint8_t r2,
-                       uint8_t g1, uint8_t g2) : Adafruit_GFX(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT) {
-	// Look up port registers and pin masks ahead of time,
-	// avoids many slow digitalWrite() calls later.
-	sclkpin   = digitalPinToBitMask(s);
-	latport   = portOutputRegister(digitalPinToPort(l));
-	latpin    = digitalPinToBitMask(l);
-	oeport    = portOutputRegister(digitalPinToPort(oe));
-	oepin     = digitalPinToBitMask(oe);
-	addraport = portOutputRegister(digitalPinToPort(a));
-	addrapin  = digitalPinToBitMask(a);
-	addrbport = portOutputRegister(digitalPinToPort(b));
-	addrbpin  = digitalPinToBitMask(b);
-	addrcport = portOutputRegister(digitalPinToPort(c));
-	addrcpin  = digitalPinToBitMask(c);
+LEDDisplay::LEDDisplay(void) : Adafruit_GFX(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT) {
+	self = this; // pointer to the current instance for the ISR
+}
 
-	r1port = portOutputRegister(digitalPinToPort(r1));
-	r1pin  = digitalPinToBitMask(r1);
-	r2port = portOutputRegister(digitalPinToPort(r2));
-	r2pin  = digitalPinToBitMask(r2);
-
-	g1port = portOutputRegister(digitalPinToPort(g1));
-	g1pin  = digitalPinToBitMask(g1);
-	g2port = portOutputRegister(digitalPinToPort(g2));
-	g2pin  = digitalPinToBitMask(g2);
-
-	_sclk = s;
-	_latch = l;
-	_r1 = r1;
-	_r2 = r2;
-	_g1 = g1;
-	_g2 = g2;
-	_a = a;
-	_b = b;
-	_c = c;
-	_d = d;
-
+void LEDDisplay::setOutputModeForPortAndMask(uint8_t port, uint8_t mask) {
+	// code borrowed from wiring_digital.c
+	volatile uint8_t *reg, *out;
+	reg = portModeRegister(port);
+	uint8_t oldSREG = SREG;
+	cli();
+	*reg |= mask;
+	SREG = oldSREG;
 }
 
 void LEDDisplay::begin() {
-	// Enable all comm & address pins as outputs, set default states:
-	pinMode(_sclk , OUTPUT); SCLKPORT   &= ~sclkpin;  // Low
-	pinMode(_latch, OUTPUT); *latport   &= ~latpin;   // Low
-	pinMode(_oe   , OUTPUT); *oeport    |= oepin;     // High (disable output)
-	pinMode(_a    , OUTPUT); *addraport &= ~addrapin; // Low
-	pinMode(_b    , OUTPUT); *addrbport &= ~addrbpin; // Low
-	pinMode(_c    , OUTPUT); *addrcport &= ~addrcpin; // Low
-	pinMode(_d    , OUTPUT); *addrdport &= ~addrdpin; // Low
-	pinMode(_r1   , OUTPUT);
-	pinMode(_r2   , OUTPUT);
-	pinMode(_g1   , OUTPUT);
-	pinMode(_g2   , OUTPUT);
+	// set output mode and initial state for all the pins defined in Hardware.h
+	setOutputModeForPortAndMask(LED_HUB08_A_PORT, LED_HUB08_A_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_B_PORT, LED_HUB08_B_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_C_PORT, LED_HUB08_C_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_D_PORT, LED_HUB08_D_MASK);
 
-	activeDisplay = this;
+	setOutputModeForPortAndMask(LED_HUB08_L_PORT, LED_HUB08_L_MASK);
+	LED_HUB08_L_PORT  &= ~LED_HUB08_L_MASK;  // latch is low
+	setOutputModeForPortAndMask(LED_HUB08_EN_PORT, LED_HUB08_EN_MASK);
+	LED_HUB08_EN_PORT  |= LED_HUB08_EN_MASK; // disable output
 
-	// Set up Timer1 for interrupt:
+	setOutputModeForPortAndMask(LED_HUB08_R1_PORT, LED_HUB08_R1_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_R2_PORT, LED_HUB08_R2_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_G1_PORT, LED_HUB08_G1_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_G2_PORT, LED_HUB08_G2_MASK);
+
+	buffptr = matrixbuff; // init buffptr (used in the matrix refresh ISR)
+
+	// hardware timer1 setup: call the ISR at a fixed 100Hz rate
 	TCCR1A  = _BV(WGM11); // Mode 14 (fast PWM), OC1A off
 	TCCR1B  = _BV(WGM13) | _BV(WGM12) | _BV(CS10); // Mode 14, no prescale
 	ICR1    = 8000; // 120Hz
-	TIMSK1 |= _BV(TOIE1); // Enable Timer1 interrupt
-	sei();                // Enable global interrupts
+
+	TIMSK1 |= _BV(TOIE1); // enable irq for timer1
+	sei();                // enable global irq
 }
 
-// currently we do not support any colors
+void LEDDisplay::setBrightness(uint8_t brightness) {
+	analogWrite(LED_HUB08_EN_PIN, ciePWM(100-brightness));
+}
+
+// 3 colors: 0: off/dark, 1: red, 2: green, 3: orange
 void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
-	// todo
+
+	uint8_t *segment = matrixbuff + x / 8 + y * LED_MATRIX_WIDTH / 8;
+	uint8_t  bit = x % 8;
+
+	switch(color) {
+	case 0: // black (led off)
+		*segment++ &= ~(0x80 >> bit);
+		*segment &= ~(0x80 >> bit);
+		break;
+	case 1: // red
+		*segment++ |= 0x80 >> bit;
+		*segment &= ~(0x80 >> bit);
+		break;
+	case 2: // green
+		*segment++ &= ~(0x80 >> bit);
+		*segment |= 0x80 >> bit;
+		break;
+	default: // orange
+		*segment++ |= 0x80 >> bit;
+		*segment |= 0x80 >> bit;
+		break;
+	}
+}
+
+void LEDDisplay::clearScreen() {
+	memset(matrixbuff, 0, sizeof(matrixbuff));
 }
 
 ISR(TIMER1_OVF_vect, ISR_BLOCK) {
-    activeDisplay->updateDisplay();
+    self->updateDisplay();
 	TIFR1 |= TOV1;
 }
 
-void LEDDisplay::updateDisplay(void) {
-	uint8_t  i, tick, tock, *ptr1, *ptr2;
-	uint16_t t, duration;
+// A stock Arduino (Leonardo for example, 16MHz crystal) can handle
+// (using the implementation below) a maximum of 565 full screen
+// refreshs per second.
 
-	*oeport  |= oepin;  // Disable LED output during row/plane switchover
-	*latport |= latpin; // Latch data loaded during *prior* interrupt
+// Using timer1 we hardwire the refresh rate at about 100Hz, leaving
+// enough free CPU resources for the main application.
 
-	// buffptr, being 'volatile' type, doesn't take well to optimization.
-	// A local register copy can speed some things up:
+void LEDDisplay::updateDisplay(void) { // @100Hz rate
+	uint8_t tick, tock, *ptr1, *ptr2;
+
 	ptr1 = (uint8_t *)buffptr;
 	ptr2 = ptr1 + (16 * LED_MATRIX_WIDTH / 8);
 
-	if(row & 0x1) *addraport |=  addrapin;
-	else          *addraport &= ~addrapin;
-	if(row & 0x2) *addrbport |=  addrbpin;
-	else          *addrbport &= ~addrbpin;
-	if(row & 0x4) *addrcport |=  addrcpin;
-	else          *addrcport &= ~addrcpin;
-	if(row & 0x8) *addrdport |=  addrdpin;
-	else          *addrdport &= ~addrdpin;
+	tock = LED_HUB08_S_PORT;
+	tick = tock | LED_HUB08_S_MASK;
 
-	TCNT1     = 0;        // Restart interrupt timer
-	*oeport  &= ~oepin;   // Re-enable output
-	*latport &= ~latpin;  // Latch down
-
-	// Record current state of SCLKPORT register, as well as a second
-	// copy with the clock bit set.  This makes the innnermost data-
-	// pushing loops faster, as they can just set the PORT state and
-	// not have to load/modify/store bits every single time.  It's a
-	// somewhat rude trick that ONLY works because the interrupt
-	// handler is set ISR_BLOCK, halting any other interrupts that
-	// might otherwise also be twiddling the port at the same time
-	// (else this would clobber them).
-	tock = SCLKPORT;
-	tick = tock | sclkpin;
-
-	/* #pragma unroll */
 	for (uint8_t byte = 0; byte < (LED_MATRIX_WIDTH / 8); byte++) {
 
-		uint8_t pixels1 = *ptr1++;
-		uint8_t pixels2 = *ptr2++;
+		// get 8 pixels for the red
+		uint8_t pixels_r1 = *ptr1++;
+		uint8_t pixels_r2 = *ptr2++;
 
-		// apply the same "rude" trick to speedup the port operations
-		uint8_t r1on = *r1port | r1pin;
-		uint8_t r1off = *r1port & ~r1pin;
+		// and green color each
+		uint8_t pixels_g1 = *ptr1++;
+		uint8_t pixels_g2 = *ptr2++;
 
-		uint8_t r2on = *r2port | r2pin;
-		uint8_t r2off = *r2port & ~r2pin;
+		// do pre-calculate values for setting the red and green
+		// pixels to speedup things later
+		uint8_t r1on = LED_HUB08_R1_PORT | LED_HUB08_R1_MASK;
+		uint8_t r1off = LED_HUB08_R1_PORT & ~LED_HUB08_R1_MASK;
+		uint8_t r2on = LED_HUB08_R2_PORT | LED_HUB08_R2_MASK;
+		uint8_t r2off = LED_HUB08_R2_PORT & ~LED_HUB08_R2_MASK;
 
-#define clock(pulse) SCLKPORT = pulse
-#define do_col_1(mask) if (pixels1 & (mask)) *r1port = r1on; else *r1port = r1off
-#define do_col_2(mask) if (pixels2 & (mask)) *r2port = r2on; else *r2port = r2off
-#define do_col(mask) clock(tick); do_col_1(mask); do_col_2(mask); clock(tock)
+		uint8_t g1on = LED_HUB08_G1_PORT | LED_HUB08_G1_MASK;
+		uint8_t g1off = LED_HUB08_G1_PORT & ~LED_HUB08_G1_MASK;
+		uint8_t g2on = LED_HUB08_G2_PORT | LED_HUB08_G2_MASK;
+		uint8_t g2off = LED_HUB08_G2_PORT & ~LED_HUB08_G2_MASK;
+
+		// we unroll things for speed, use some macros
+#define clock(pulse) LED_HUB08_S_PORT = pulse
+#define do_col_r1(mask) if (pixels_r1 & (mask)) LED_HUB08_R1_PORT = r1on; else LED_HUB08_R1_PORT = r1off
+#define do_col_r2(mask) if (pixels_r2 & (mask)) LED_HUB08_R2_PORT = r2on; else LED_HUB08_R2_PORT = r2off
+#define do_col_g1(mask) if (pixels_g1 & (mask)) LED_HUB08_G1_PORT = g1on; else LED_HUB08_G1_PORT = g1off
+#define do_col_g2(mask) if (pixels_g2 & (mask)) LED_HUB08_G2_PORT = g2on; else LED_HUB08_G2_PORT = g2off
+#define do_col(mask) clock(tick); do_col_r1(mask); do_col_r2(mask); do_col_g1(mask); do_col_g2(mask); clock(tock)
 
 		// For performance reasons we do use macros and not C loops
 		do_col(0x80);
@@ -147,8 +149,43 @@ void LEDDisplay::updateDisplay(void) {
 		do_col(0x01);
 	}
 
-	buffptr = ptr1; //+= 8;
+	// Because the brightness of the display is adjustable using PWM,
+	// we can not assume that the display is currently on or off. We
+	// check the current state of the EN output and handle both cases
+	// accordingly.
+
+	bool isDisplayActive = LED_HUB08_EN_PORT & LED_HUB08_EN_MASK;
+
+	if (isDisplayActive)
+		LED_HUB08_EN_PORT  |= LED_HUB08_EN_MASK;  // Disable LED output
+
+	LED_HUB08_L_PORT |= LED_HUB08_L_MASK; // Latch data (H)
+
+	if(row & 0x1) LED_HUB08_A_PORT |=  LED_HUB08_A_MASK;
+	else          LED_HUB08_A_PORT &= ~LED_HUB08_A_MASK;
+	if(row & 0x2) LED_HUB08_B_PORT |=  LED_HUB08_B_MASK;
+	else          LED_HUB08_B_PORT &= ~LED_HUB08_B_MASK;
+	if(row & 0x4) LED_HUB08_C_PORT |=  LED_HUB08_C_MASK;
+	else          LED_HUB08_C_PORT &= ~LED_HUB08_C_MASK;
+	if(row & 0x8) LED_HUB08_D_PORT |=  LED_HUB08_D_MASK;
+	else          LED_HUB08_D_PORT &= ~LED_HUB08_D_MASK;
+
+	LED_HUB08_L_PORT  &= ~LED_HUB08_L_MASK;;  // Latch down (L)
+
+	if (isDisplayActive)
+		LED_HUB08_EN_PORT  &= ~LED_HUB08_EN_MASK;   // Re-enable output
+
+	// increment row counter
+	if (++row == 16) { // overflow?
+		ptr1 = matrixbuff;
+	}
+
+	buffptr = ptr1; //+= 16; // save the current pointer to buffptr for next irq
+
+	TCNT1     = 0;        // Restart interrupt timer
+#ifdef DEBUG
 	refresh++;
+#endif
 }
 
 void LEDDisplay::setCharCursor(int16_t x, int16_t y) {

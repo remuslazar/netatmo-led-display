@@ -3,6 +3,8 @@
  * The LED Matrix panel has 64x32 pixels. Several panel can be combined together as a large screen.
  */
 
+#define DEBUG
+
 #ifndef __LED_DISPLAY_H__
 #define __LED_DISPLAY_H__
 
@@ -21,13 +23,9 @@
 class LEDDisplay : public Adafruit_GFX {
  public:
 
-	// LEDDisplay(width, height, A, B, C, D, L, S, OE, R1, R2, G1, G2);
-	LEDDisplay(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
-	           uint8_t l, uint8_t s, uint8_t oe,
-	           uint8_t r1, uint8_t r2,
-	           uint8_t g1, uint8_t g2);
+	LEDDisplay(void);
 
-	// init the LCD Display, setup and buffer and width/height
+	// init
 	void begin();
 
 	// we implement this function using the LEDMatrix library
@@ -35,26 +33,24 @@ class LEDDisplay : public Adafruit_GFX {
 
 	void setCharCursor(int16_t x, int16_t y);
 
+#ifdef DEBUG
 	volatile long refresh = 0;
+#endif
 	void updateDisplay();
 
+	void clearScreen();
+
+	// set the display brightness (0-100%)
+	void setBrightness(uint8_t brightness);
+
  private:
-	uint8_t matrixbuff[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8];
-
-	// PORT register pointers, pin bitmasks, pin numbers:
-	volatile uint8_t
-	*latport, *oeport, *addraport, *addrbport, *addrcport, *addrdport,
-		*r1port, *r2port, *g1port, *g2port;
-
-	uint8_t
-	sclkpin, latpin, oepin, addrapin, addrbpin, addrcpin, addrdpin,
-		_sclk, _latch, _oe, _a, _b, _c, _d,
-		_r1, _r2, _g1, _g2,
-		r1pin, r2pin, g1pin, g2pin;
+	uint8_t matrixbuff[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8 * 2]; // red/green = 2 bits
 
 	// Counters/pointers for interrupt handler:
 	volatile uint8_t row = 0;
 	volatile uint8_t *buffptr;
+	void setOutputModeForPortAndMask(uint8_t port, uint8_t mask);
+
 };
 
 #endif
