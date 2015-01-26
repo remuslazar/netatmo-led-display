@@ -8,20 +8,20 @@
 </settings>
 <grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="yes" active="no"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="no"/>
-<layer number="17" name="Pads" color="2" fill="1" visible="yes" active="no"/>
-<layer number="18" name="Vias" color="2" fill="1" visible="yes" active="no"/>
-<layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="no"/>
-<layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="no"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="no"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="no"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="no"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="no"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="no"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="no"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="no"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="no"/>
+<layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
+<layer number="17" name="Pads" color="2" fill="1" visible="no" active="no"/>
+<layer number="18" name="Vias" color="2" fill="1" visible="no" active="no"/>
+<layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="no"/>
+<layer number="20" name="Dimension" color="15" fill="1" visible="no" active="no"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="no"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="no"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="no"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="no"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="no" active="no"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="no" active="no"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="no" active="no"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="no" active="no"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="no"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="no" active="no"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="no"/>
@@ -30,8 +30,8 @@
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="no"/>
 <layer number="35" name="tGlue" color="7" fill="4" visible="no" active="no"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="no"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="no"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="no"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="no" active="no"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="no" active="no"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="no"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="no"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="no"/>
@@ -39,17 +39,17 @@
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="no"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="no"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="no"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="no"/>
-<layer number="47" name="Measures" color="7" fill="1" visible="yes" active="no"/>
-<layer number="48" name="Document" color="7" fill="1" visible="yes" active="no"/>
-<layer number="49" name="Reference" color="7" fill="1" visible="yes" active="no"/>
-<layer number="50" name="dxf" color="7" fill="1" visible="yes" active="no"/>
-<layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="no"/>
-<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="no"/>
-<layer number="53" name="tGND_GNDA" color="7" fill="9" visible="yes" active="no"/>
-<layer number="54" name="bGND_GNDA" color="1" fill="9" visible="yes" active="no"/>
-<layer number="56" name="wert" color="7" fill="1" visible="yes" active="no"/>
-<layer number="57" name="tCAD" color="7" fill="1" visible="yes" active="no"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="no" active="no"/>
+<layer number="47" name="Measures" color="7" fill="1" visible="no" active="no"/>
+<layer number="48" name="Document" color="7" fill="1" visible="no" active="no"/>
+<layer number="49" name="Reference" color="7" fill="1" visible="no" active="no"/>
+<layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
+<layer number="51" name="tDocu" color="7" fill="1" visible="no" active="no"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="no" active="no"/>
+<layer number="53" name="tGND_GNDA" color="7" fill="9" visible="no" active="no"/>
+<layer number="54" name="bGND_GNDA" color="1" fill="9" visible="no" active="no"/>
+<layer number="56" name="wert" color="7" fill="1" visible="no" active="no"/>
+<layer number="57" name="tCAD" color="7" fill="1" visible="no" active="no"/>
 <layer number="90" name="Modules" color="5" fill="1" visible="yes" active="yes"/>
 <layer number="91" name="Nets" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="92" name="Busses" color="1" fill="1" visible="yes" active="yes"/>
@@ -939,9 +939,7 @@ This library includes the former libraries ribcon.lbr and ribcon4.lbr.&lt;p&gt;
 <segment>
 <pinref part="GND1" gate="1" pin="GND"/>
 <pinref part="CON1" gate="G$1" pin="1"/>
-<wire x1="73.66" y1="96.52" x2="73.66" y2="99.06" width="0.1524" layer="91"/>
-<wire x1="73.66" y1="99.06" x2="73.66" y2="101.6" width="0.1524" layer="91"/>
-<wire x1="73.66" y1="101.6" x2="73.66" y2="111.76" width="0.1524" layer="91"/>
+<wire x1="73.66" y1="96.52" x2="73.66" y2="111.76" width="0.1524" layer="91"/>
 <wire x1="73.66" y1="111.76" x2="73.66" y2="114.3" width="0.1524" layer="91"/>
 <wire x1="73.66" y1="114.3" x2="73.66" y2="116.84" width="0.1524" layer="91"/>
 <wire x1="73.66" y1="116.84" x2="76.2" y2="116.84" width="0.1524" layer="91"/>
@@ -951,12 +949,6 @@ This library includes the former libraries ribcon.lbr and ribcon4.lbr.&lt;p&gt;
 <pinref part="CON1" gate="G$1" pin="5"/>
 <wire x1="73.66" y1="111.76" x2="76.2" y2="111.76" width="0.1524" layer="91"/>
 <junction x="73.66" y="111.76"/>
-<pinref part="CON1" gate="G$1" pin="13"/>
-<wire x1="73.66" y1="101.6" x2="76.2" y2="101.6" width="0.1524" layer="91"/>
-<junction x="73.66" y="101.6"/>
-<pinref part="CON1" gate="G$1" pin="15"/>
-<wire x1="73.66" y1="99.06" x2="76.2" y2="99.06" width="0.1524" layer="91"/>
-<junction x="73.66" y="99.06"/>
 </segment>
 <segment>
 <pinref part="GND2" gate="1" pin="GND"/>
@@ -972,82 +964,82 @@ This library includes the former libraries ribcon.lbr and ribcon4.lbr.&lt;p&gt;
 <wire x1="76.2" y1="106.68" x2="60.96" y2="106.68" width="0.1524" layer="91"/>
 <label x="60.96" y="106.934" size="1.6764" layer="95"/>
 <wire x1="60.96" y1="106.68" x2="60.96" y2="157.48" width="0.1524" layer="91"/>
-<pinref part="U$1" gate="G$1" pin="D3"/>
-<wire x1="190.5" y1="157.48" x2="190.5" y2="134.62" width="0.1524" layer="91"/>
-<wire x1="60.96" y1="157.48" x2="190.5" y2="157.48" width="0.1524" layer="91"/>
+<wire x1="60.96" y1="157.48" x2="185.42" y2="157.48" width="0.1524" layer="91"/>
 <label x="167.64" y="157.48" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="D5"/>
+<wire x1="185.42" y1="157.48" x2="185.42" y2="134.62" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="STB" class="0">
+<net name="L" class="0">
 <segment>
 <pinref part="CON1" gate="G$1" pin="14"/>
 <wire x1="91.44" y1="101.6" x2="132.08" y2="101.6" width="0.1524" layer="91"/>
 <label x="93.98" y="101.854" size="1.6764" layer="95"/>
-<wire x1="132.08" y1="101.6" x2="132.08" y2="165.1" width="0.1524" layer="91"/>
-<wire x1="132.08" y1="165.1" x2="195.58" y2="165.1" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="101.6" x2="132.08" y2="170.18" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="170.18" x2="195.58" y2="170.18" width="0.1524" layer="91"/>
 <pinref part="U$1" gate="G$1" pin="D1"/>
-<wire x1="195.58" y1="165.1" x2="195.58" y2="134.62" width="0.1524" layer="91"/>
-<label x="170.18" y="165.1" size="1.778" layer="95"/>
+<wire x1="195.58" y1="170.18" x2="195.58" y2="134.62" width="0.1524" layer="91"/>
+<label x="170.18" y="170.18" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="SCK" class="0">
+<net name="S" class="0">
 <segment>
 <pinref part="CON1" gate="G$1" pin="16"/>
 <wire x1="91.44" y1="99.06" x2="134.62" y2="99.06" width="0.1524" layer="91"/>
 <label x="93.98" y="99.314" size="1.6764" layer="95"/>
-<wire x1="134.62" y1="99.06" x2="134.62" y2="167.64" width="0.1524" layer="91"/>
-<wire x1="134.62" y1="167.64" x2="198.12" y2="167.64" width="0.1524" layer="91"/>
+<wire x1="134.62" y1="99.06" x2="134.62" y2="172.72" width="0.1524" layer="91"/>
+<wire x1="134.62" y1="172.72" x2="198.12" y2="172.72" width="0.1524" layer="91"/>
 <pinref part="U$1" gate="G$1" pin="D0"/>
-<wire x1="198.12" y1="167.64" x2="198.12" y2="134.62" width="0.1524" layer="91"/>
-<label x="170.18" y="167.64" size="1.778" layer="95"/>
+<wire x1="198.12" y1="172.72" x2="198.12" y2="134.62" width="0.1524" layer="91"/>
+<label x="170.18" y="172.72" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="LD" class="0">
+<net name="D" class="0">
 <segment>
 <pinref part="CON1" gate="G$1" pin="8"/>
 <wire x1="91.44" y1="109.22" x2="101.6" y2="109.22" width="0.1524" layer="91"/>
 <label x="91.44" y="109.474" size="1.6764" layer="95"/>
 <wire x1="101.6" y1="109.22" x2="101.6" y2="147.32" width="0.1524" layer="91"/>
-<wire x1="101.6" y1="147.32" x2="187.96" y2="147.32" width="0.1524" layer="91"/>
-<pinref part="U$1" gate="G$1" pin="D4"/>
-<wire x1="187.96" y1="147.32" x2="187.96" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="101.6" y1="147.32" x2="182.88" y2="147.32" width="0.1524" layer="91"/>
 <label x="157.48" y="147.32" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="D6"/>
+<wire x1="182.88" y1="147.32" x2="182.88" y2="134.62" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="LC" class="0">
+<net name="C" class="0">
 <segment>
 <pinref part="CON1" gate="G$1" pin="6"/>
 <wire x1="91.44" y1="111.76" x2="99.06" y2="111.76" width="0.1524" layer="91"/>
 <label x="91.44" y="112.014" size="1.6764" layer="95"/>
 <wire x1="99.06" y1="111.76" x2="99.06" y2="144.78" width="0.1524" layer="91"/>
-<wire x1="99.06" y1="144.78" x2="182.88" y2="144.78" width="0.1524" layer="91"/>
-<pinref part="U$1" gate="G$1" pin="D6"/>
-<wire x1="182.88" y1="144.78" x2="182.88" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="99.06" y1="144.78" x2="175.26" y2="144.78" width="0.1524" layer="91"/>
 <label x="157.48" y="144.78" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="D8"/>
+<wire x1="175.26" y1="144.78" x2="175.26" y2="134.62" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="LB" class="0">
+<net name="B" class="0">
 <segment>
 <pinref part="CON1" gate="G$1" pin="4"/>
 <wire x1="91.44" y1="114.3" x2="96.52" y2="114.3" width="0.1524" layer="91"/>
 <label x="91.44" y="114.554" size="1.6764" layer="95"/>
 <wire x1="96.52" y1="114.3" x2="96.52" y2="142.24" width="0.1524" layer="91"/>
-<wire x1="96.52" y1="142.24" x2="175.26" y2="142.24" width="0.1524" layer="91"/>
-<pinref part="U$1" gate="G$1" pin="D8"/>
-<wire x1="175.26" y1="142.24" x2="175.26" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="96.52" y1="142.24" x2="170.18" y2="142.24" width="0.1524" layer="91"/>
 <label x="157.48" y="142.24" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="D10"/>
+<wire x1="170.18" y1="142.24" x2="170.18" y2="134.62" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="LA" class="0">
+<net name="A" class="0">
 <segment>
 <pinref part="CON1" gate="G$1" pin="2"/>
 <wire x1="93.98" y1="116.84" x2="91.44" y2="116.84" width="0.1524" layer="91"/>
 <label x="91.44" y="117.094" size="1.6764" layer="95"/>
 <wire x1="93.98" y1="116.84" x2="93.98" y2="139.7" width="0.1524" layer="91"/>
-<wire x1="93.98" y1="139.7" x2="180.34" y2="139.7" width="0.1524" layer="91"/>
-<pinref part="U$1" gate="G$1" pin="D7"/>
-<wire x1="180.34" y1="139.7" x2="180.34" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="93.98" y1="139.7" x2="172.72" y2="139.7" width="0.1524" layer="91"/>
 <label x="157.48" y="139.7" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="D9"/>
+<wire x1="172.72" y1="139.7" x2="172.72" y2="134.62" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="EN" class="0">
@@ -1056,10 +1048,10 @@ This library includes the former libraries ribcon.lbr and ribcon4.lbr.&lt;p&gt;
 <wire x1="76.2" y1="109.22" x2="66.04" y2="109.22" width="0.1524" layer="91"/>
 <label x="68.58" y="109.474" size="1.6764" layer="95"/>
 <wire x1="66.04" y1="109.22" x2="66.04" y2="152.4" width="0.1524" layer="91"/>
-<wire x1="66.04" y1="152.4" x2="185.42" y2="152.4" width="0.1524" layer="91"/>
-<pinref part="U$1" gate="G$1" pin="D5"/>
-<wire x1="185.42" y1="152.4" x2="185.42" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="66.04" y1="152.4" x2="180.34" y2="152.4" width="0.1524" layer="91"/>
 <label x="162.56" y="152.4" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="D7"/>
+<wire x1="180.34" y1="152.4" x2="180.34" y2="134.62" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="G1" class="0">
@@ -1068,10 +1060,10 @@ This library includes the former libraries ribcon.lbr and ribcon4.lbr.&lt;p&gt;
 <wire x1="91.44" y1="106.68" x2="129.54" y2="106.68" width="0.1524" layer="91"/>
 <label x="104.14" y="106.934" size="1.6764" layer="95"/>
 <wire x1="129.54" y1="106.68" x2="129.54" y2="160.02" width="0.1524" layer="91"/>
-<pinref part="U$1" gate="G$1" pin="D2"/>
-<wire x1="193.04" y1="160.02" x2="193.04" y2="134.62" width="0.1524" layer="91"/>
-<wire x1="129.54" y1="160.02" x2="193.04" y2="160.02" width="0.1524" layer="91"/>
+<wire x1="129.54" y1="160.02" x2="187.96" y2="160.02" width="0.1524" layer="91"/>
 <label x="167.64" y="160.02" size="1.778" layer="95"/>
+<pinref part="U$1" gate="G$1" pin="D4"/>
+<wire x1="187.96" y1="160.02" x2="187.96" y2="134.62" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="R2" class="0">
@@ -1079,13 +1071,23 @@ This library includes the former libraries ribcon.lbr and ribcon4.lbr.&lt;p&gt;
 <pinref part="CON1" gate="G$1" pin="11"/>
 <wire x1="76.2" y1="104.14" x2="68.58" y2="104.14" width="0.1524" layer="91"/>
 <label x="68.58" y="104.394" size="1.6764" layer="95"/>
+<wire x1="68.58" y1="104.14" x2="68.58" y2="165.1" width="0.1524" layer="91"/>
+<wire x1="68.58" y1="165.1" x2="190.5" y2="165.1" width="0.1524" layer="91"/>
+<pinref part="U$1" gate="G$1" pin="D3"/>
+<wire x1="190.5" y1="165.1" x2="190.5" y2="134.62" width="0.1524" layer="91"/>
+<label x="162.56" y="165.1" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="G2" class="0">
 <segment>
 <pinref part="CON1" gate="G$1" pin="12"/>
-<wire x1="91.44" y1="104.14" x2="101.6" y2="104.14" width="0.1524" layer="91"/>
+<wire x1="91.44" y1="104.14" x2="109.22" y2="104.14" width="0.1524" layer="91"/>
 <label x="104.14" y="104.14" size="1.778" layer="95"/>
+<wire x1="109.22" y1="104.14" x2="109.22" y2="167.64" width="0.1524" layer="91"/>
+<pinref part="U$1" gate="G$1" pin="D2"/>
+<wire x1="109.22" y1="167.64" x2="193.04" y2="167.64" width="0.1524" layer="91"/>
+<wire x1="193.04" y1="167.64" x2="193.04" y2="134.62" width="0.1524" layer="91"/>
+<label x="162.56" y="167.64" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
