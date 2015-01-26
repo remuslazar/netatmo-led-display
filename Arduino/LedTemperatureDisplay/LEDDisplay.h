@@ -35,6 +35,7 @@ class LEDDisplay : public Adafruit_GFX {
 
 	void setCharCursor(int16_t x, int16_t y);
 
+	volatile long refresh = 0;
 	void updateDisplay();
 
  private:

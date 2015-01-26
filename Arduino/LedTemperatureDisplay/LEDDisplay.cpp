@@ -5,6 +5,8 @@
 #define SCLKPORT PORTB
 #define DATAPORT
 
+static LEDDisplay *activeDisplay = NULL;
+
 LEDDisplay::LEDDisplay(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
                        uint8_t l, uint8_t s, uint8_t oe,
                        uint8_t r1, uint8_t r2,
@@ -59,11 +61,25 @@ void LEDDisplay::begin() {
 	pinMode(_r2   , OUTPUT);
 	pinMode(_g1   , OUTPUT);
 	pinMode(_g2   , OUTPUT);
+
+	activeDisplay = this;
+
+	// Set up Timer1 for interrupt:
+	TCCR1A  = _BV(WGM11); // Mode 14 (fast PWM), OC1A off
+	TCCR1B  = _BV(WGM13) | _BV(WGM12) | _BV(CS10); // Mode 14, no prescale
+	ICR1    = 8000; // 120Hz
+	TIMSK1 |= _BV(TOIE1); // Enable Timer1 interrupt
+	sei();                // Enable global interrupts
 }
 
 // currently we do not support any colors
 void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 	// todo
+}
+
+ISR(TIMER1_OVF_vect, ISR_BLOCK) {
+    activeDisplay->updateDisplay();
+	TIFR1 |= TOV1;
 }
 
 void LEDDisplay::updateDisplay(void) {
@@ -87,6 +103,7 @@ void LEDDisplay::updateDisplay(void) {
 	if(row & 0x8) *addrdport |=  addrdpin;
 	else          *addrdport &= ~addrdpin;
 
+	TCNT1     = 0;        // Restart interrupt timer
 	*oeport  &= ~oepin;   // Re-enable output
 	*latport &= ~latpin;  // Latch down
 
@@ -131,6 +148,7 @@ void LEDDisplay::updateDisplay(void) {
 	}
 
 	buffptr = ptr1; //+= 8;
+	refresh++;
 }
 
 void LEDDisplay::setCharCursor(int16_t x, int16_t y) {

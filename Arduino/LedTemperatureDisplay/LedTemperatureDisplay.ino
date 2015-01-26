@@ -39,14 +39,12 @@ void setup() {
 void loop() {
 #ifdef DEBUG
 	static uint32_t lastCountTime = 0;
-	display.updateDisplay();
-	lines++;
 #define DISPLAY_REFRESH 1
 	if ((millis() - lastCountTime) > DISPLAY_REFRESH * 1000) {
 		lastCountTime = millis();
 		Serial.print("refresh/s: ");
-		Serial.println(lines/16/DISPLAY_REFRESH);
-		lines = 0;
+		Serial.println(display.refresh/16/DISPLAY_REFRESH);
+		display.refresh = 0;
 	}
 #endif
 }
