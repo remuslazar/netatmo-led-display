@@ -3,8 +3,6 @@
  * The LED Matrix panel has 64x32 pixels. Several panel can be combined together as a large screen.
  */
 
-#define DEBUG
-
 #ifndef __LED_DISPLAY_H__
 #define __LED_DISPLAY_H__
 
@@ -19,6 +17,11 @@
 
 #include <Adafruit_GFX.h>
 #include <stdint.h>
+
+#define LED_BLACK_COLOR 0
+#define LED_RED_COLOR 1
+#define LED_GREEN_COLOR 2
+#define LED_ORANGE_COLOR 3
 
 class LEDDisplay : public Adafruit_GFX {
  public:

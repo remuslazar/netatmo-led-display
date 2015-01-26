@@ -1,8 +1,6 @@
 #include "LEDDisplay.h"
 #include <Adafruit_GFX.h>
 
-#define DEBUG
-
 LEDDisplay display;
 
 void setup() {
@@ -19,6 +17,7 @@ void setup() {
 
 	// setup our LCDDisplay instance
 	display.begin();
+	display.setTextColor(LED_RED_COLOR);
 
 	// for now just a demo screen
 	//                                           12345678901
