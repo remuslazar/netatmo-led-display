@@ -201,7 +201,7 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 		LED_HUB08_EN_PORT  &= ~LED_HUB08_EN_MASK;   // Re-enable output
 
 	// increment row counter
-	if (++row == 16) { // overflow?
+	if (++row > 15) { // overflow?
 		row = 0; // reset row counter and the pointer
 		ptr1 = matrixbuff;
 	}
