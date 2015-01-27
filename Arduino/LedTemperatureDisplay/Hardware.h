@@ -23,7 +23,6 @@
 
 */
 
-
 #define LED_HUB08_A_PORT PORTB
 #define LED_HUB08_A_MASK _BV(5)
 #define LED_HUB08_B_PORT PORTB
