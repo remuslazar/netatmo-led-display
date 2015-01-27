@@ -72,9 +72,11 @@ void LEDDisplay::clearScreen() {
 // 3 colors: 0: off/dark, 1: red, 2: green, 3: orange
 void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
-	// for the red and green colors we have two consecutive bytes
-	display_t *segment = matrixbuff + (x/8 + y * LED_MATRIX_WIDTH / 8);
-	uint8_t  bit = x % 8;
+	// boundary check
+	if ((uint16_t)x >= LED_MATRIX_WIDTH || (uint16_t)y >= LED_MATRIX_HEIGHT) return;
+
+	display_t *segment = matrixbuff + ((uint8_t)x/8 + (uint8_t)y * LED_MATRIX_WIDTH / 8);
+	uint8_t bit = x % 8;
 
 	switch(color) {
 	case LED_BLACK_COLOR:
