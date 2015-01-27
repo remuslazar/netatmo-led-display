@@ -18,7 +18,7 @@ void setup() {
 #endif
 
 	// setup our LCDDisplay instance
-	display.begin(false);
+	display.begin(true);
 	display.setTextColor(LED_RED_COLOR);
 
 	// for now just a demo screen
@@ -39,7 +39,7 @@ void loop() {
 #ifdef DEBUG
 	static uint32_t lastCountTime = 0;
 #define DISPLAY_REFRESH 1
-	display.updateDisplay();
+	//display.updateDisplay();
 	if ((millis() - lastCountTime) > DISPLAY_REFRESH * 1000) {
 		lastCountTime = millis();
 		Serial.print("refresh/s: ");

@@ -136,9 +136,9 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	// do pre-calculate values for setting the red and green
 	// pixels to speedup things later
 	uint8_t all_off = LED_HUB08_DATA_PORT & ~( LED_HUB08_R1_MASK
-	                                           | LED_HUB08_R2_MASK
-	                                           | LED_HUB08_G1_MASK
-	                                           | LED_HUB08_G2_MASK);
+	                                         | LED_HUB08_R2_MASK
+	                                         | LED_HUB08_G1_MASK
+	                                         | LED_HUB08_G2_MASK );
 
 	// inner loop: speed!
 	for (uint8_t i = 0; i < (LED_MATRIX_WIDTH/8); i++) {
