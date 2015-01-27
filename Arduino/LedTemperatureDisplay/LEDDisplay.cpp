@@ -122,8 +122,9 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK) {
 }
 
 // A stock Arduino (Leonardo for example, 16MHz crystal) can handle
-// (using the implementation below) a maximum of 949 (orange screen) /
-// 761 (blank screen) full screen refresh cycles per second.
+// (using the implementation below) a maximum of 949 (blank screen) /
+// 761 (orange screen, all LEDs on) full screen refresh cycles per
+// second.
 
 // Using timer1 we hardwire the refresh rate at about 100Hz, leaving
 // enough free CPU resources for the main application.
@@ -146,10 +147,12 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 
 	// do pre-calculate values for setting the red and green
 	// pixels to speedup things later
-	uint8_t all_off = LED_HUB08_DATA_PORT & ~( LED_HUB08_R1_MASK
-	                                         | LED_HUB08_R2_MASK
-	                                         | LED_HUB08_G1_MASK
-	                                         | LED_HUB08_G2_MASK );
+	// our display uses inverted data lines (0 = on)
+	// set all the data lines to high (LED off)
+	uint8_t all_off = LED_HUB08_DATA_PORT | LED_HUB08_R1_MASK
+	                                      | LED_HUB08_R2_MASK
+	                                      | LED_HUB08_G1_MASK
+	                                      | LED_HUB08_G2_MASK ;
 
 	// inner loop: speed!
 	for (uint8_t i = 0; i < (LED_MATRIX_WIDTH/8); i++) {
@@ -163,10 +166,12 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 		// we unroll things for speed, use some macros
 #define clock(pulse) LED_HUB08_S_PORT = pulse
 #define do_col_init() LED_HUB08_DATA_PORT = all_off
-#define do_col_r1(mask) if (pixels_1.red & mask) LED_HUB08_DATA_PORT |= LED_HUB08_R1_MASK
-#define do_col_r2(mask) if (pixels_2.red & mask) LED_HUB08_DATA_PORT |= LED_HUB08_R2_MASK
-#define do_col_g1(mask) if (pixels_1.green & mask) LED_HUB08_DATA_PORT |= LED_HUB08_G1_MASK
-#define do_col_g2(mask) if (pixels_2.green & mask) LED_HUB08_DATA_PORT |= LED_HUB08_G2_MASK
+
+		// if the pixel is active, set the corresponding bit to low
+#define do_col_r1(mask) if (pixels_1.red & mask) LED_HUB08_DATA_PORT &= ~LED_HUB08_R1_MASK
+#define do_col_r2(mask) if (pixels_2.red & mask) LED_HUB08_DATA_PORT &= ~LED_HUB08_R2_MASK
+#define do_col_g1(mask) if (pixels_1.green & mask) LED_HUB08_DATA_PORT &= ~LED_HUB08_G1_MASK
+#define do_col_g2(mask) if (pixels_2.green & mask) LED_HUB08_DATA_PORT &= ~LED_HUB08_G2_MASK
 #define do_col(mask) clock(tick); do_col_init(); do_col_r1(mask); do_col_r2(mask); do_col_g1(mask); do_col_g2(mask); clock(tock)
 
 		// For performance reasons we do use macros and not C loops.
