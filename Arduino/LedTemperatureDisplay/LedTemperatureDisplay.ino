@@ -73,8 +73,8 @@ void demoScreen() {
 
 	//                                           1234567890
 	//                                          +-----------+
-	display.setCharCursor(0,0); display.print(F("34.4  33.3"));
-	display.setCharCursor(0,1); display.print(F("  49%  50%"));
+	display.setCharCursor(0,0); display.print(F("34.4\xf7 33.3"));
+	display.setCharCursor(0,1); display.print(F(" 49%   50%"));
 	display.setCharCursor(0,2); display.print(F(" 898 1030m"));
 	display.setCharCursor(0,3); display.print(F("25.1 14:42"));
 	//                                          +-----------+
