@@ -5,6 +5,8 @@ LEDDisplay display;
 
 void setup() {
 
+#define DEBUG
+
 #ifdef DEBUG
 	Serial.begin(9600);
 	while (!Serial) {
@@ -16,7 +18,7 @@ void setup() {
 #endif
 
 	// setup our LCDDisplay instance
-	display.begin();
+	display.begin(false);
 	display.setTextColor(LED_RED_COLOR);
 
 	// for now just a demo screen
@@ -28,12 +30,16 @@ void setup() {
 	display.setCharCursor(0,3); display.print(F("25.01 14:42"));
 	//                                          +-----------+
 
+	display.clearScreen();
+	display.fillScreen(LED_ORANGE_COLOR);
+	//display.clearScreen();
 }
 
 void loop() {
 #ifdef DEBUG
 	static uint32_t lastCountTime = 0;
 #define DISPLAY_REFRESH 1
+	display.updateDisplay();
 	if ((millis() - lastCountTime) > DISPLAY_REFRESH * 1000) {
 		lastCountTime = millis();
 		Serial.print("refresh/s: ");

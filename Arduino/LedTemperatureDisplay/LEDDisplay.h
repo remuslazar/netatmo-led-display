@@ -23,16 +23,19 @@
 #define LED_GREEN_COLOR 2
 #define LED_ORANGE_COLOR 3
 
+#define DEBUG 1
+
 class LEDDisplay : public Adafruit_GFX {
  public:
 
 	LEDDisplay(void);
 
 	// init
-	void begin();
+	void begin(bool useTimer);
 
 	// we implement this function using the LEDMatrix library
-	void drawPixel(int16_t x, int16_t y, uint16_t color);
+	void drawPixel(int16_t x, int16_t y, uint16_t color),
+		fillScreen(uint16_t color);
 
 	void setCharCursor(int16_t x, int16_t y);
 

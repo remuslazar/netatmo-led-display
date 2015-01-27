@@ -25,7 +25,7 @@ void LEDDisplay::setOutputModeForPortAndMask(uint8_t port, uint8_t mask) {
 	SREG = oldSREG;
 }
 
-void LEDDisplay::begin() {
+void LEDDisplay::begin(bool useTimer) {
 	// set output mode and initial state for all the pins defined in Hardware.h
 	setOutputModeForPortAndMask(LED_HUB08_A_PORT, LED_HUB08_A_MASK);
 	setOutputModeForPortAndMask(LED_HUB08_B_PORT, LED_HUB08_B_MASK);
@@ -37,30 +37,37 @@ void LEDDisplay::begin() {
 	setOutputModeForPortAndMask(LED_HUB08_EN_PORT, LED_HUB08_EN_MASK);
 	LED_HUB08_EN_PORT  |= LED_HUB08_EN_MASK; // disable output
 
-	setOutputModeForPortAndMask(LED_HUB08_R1_PORT, LED_HUB08_R1_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_R2_PORT, LED_HUB08_R2_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_G1_PORT, LED_HUB08_G1_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_G2_PORT, LED_HUB08_G2_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_R1_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_R2_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_G1_MASK);
+	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_G2_MASK);
 
 	buffptr = matrixbuff; // init buffptr (used in the matrix refresh ISR)
 
-	// hardware timer1 setup: call the ISR at a fixed 100Hz rate
-	TCCR1A  = _BV(WGM11); // Mode 14 (fast PWM), OC1A off
-	TCCR1B  = _BV(WGM13) | _BV(WGM12) | _BV(CS10); // Mode 14, no prescale
-	ICR1    = 8000; // 120Hz
+	if (useTimer) {
+		// hardware timer1 setup: call the ISR at a fixed 100Hz rate
+		TCCR1A  = _BV(WGM11); // Mode 14 (fast PWM), OC1A off
+		TCCR1B  = _BV(WGM13) | _BV(WGM12) | _BV(CS10); // Mode 14, no prescale
+		ICR1    = 8000; // 120Hz
 
-	TIMSK1 |= _BV(TOIE1); // enable irq for timer1
-	sei();                // enable global irq
+		TIMSK1 |= _BV(TOIE1); // enable irq for timer1
+		sei();                // enable global irq
+	}
 }
 
 void LEDDisplay::setBrightness(uint8_t brightness) {
 	analogWrite(LED_HUB08_EN_PIN, ciePWM(100-brightness));
 }
 
+void LEDDisplay::clearScreen() {
+	memset(matrixbuff, 0, sizeof(matrixbuff));
+}
+
 // 3 colors: 0: off/dark, 1: red, 2: green, 3: orange
 void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
-	uint8_t *segment = matrixbuff + x / 8 + y * LED_MATRIX_WIDTH / 8;
+	// for the red and green colors we have two consecutive bytes
+	uint8_t *segment = matrixbuff + (x/8 + y * LED_MATRIX_WIDTH / 8) * 2;
 	uint8_t  bit = x % 8;
 
 	switch(color) {
@@ -79,22 +86,34 @@ void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 	default: // orange
 		*segment++ |= 0x80 >> bit;
 		*segment |= 0x80 >> bit;
-		break;
 	}
 }
 
-void LEDDisplay::clearScreen() {
-	memset(matrixbuff, 0, sizeof(matrixbuff));
+void LEDDisplay::fillScreen(uint16_t color) {
+
+	switch (color) {
+	case LED_BLACK_COLOR:
+		memset(matrixbuff, 0, sizeof(matrixbuff));
+		break;
+	case LED_RED_COLOR:
+		memset(matrixbuff, 0b10101010, sizeof(matrixbuff));
+		break;
+	case LED_GREEN_COLOR:
+		memset(matrixbuff, 0b01010101, sizeof(matrixbuff));
+		break;
+	default:
+		memset(matrixbuff, 0b11111111, sizeof(matrixbuff));
+	}
 }
 
 ISR(TIMER1_OVF_vect, ISR_BLOCK) {
-    self->updateDisplay();
+	self->updateDisplay();
 	TIFR1 |= TOV1;
 }
 
 // A stock Arduino (Leonardo for example, 16MHz crystal) can handle
-// (using the implementation below) a maximum of 565 full screen
-// refreshs per second.
+// (using the implementation below) a maximum of 949 (orange screen) /
+// 761 (blank screen) full screen refresh cycles per second.
 
 // Using timer1 we hardwire the refresh rate at about 100Hz, leaving
 // enough free CPU resources for the main application.
@@ -103,12 +122,26 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	uint8_t tick, tock, *ptr1, *ptr2;
 
 	ptr1 = (uint8_t *)buffptr;
-	ptr2 = ptr1 + (16 * LED_MATRIX_WIDTH / 8);
+	ptr2 = ptr1 + (16 * LED_MATRIX_WIDTH / 8 * 2); // 2 bits per pixel (2 colors)
 
+	// we know that the S(CLK) port is not used for the data signals
+	// (r1,r2,g1,g2) (see Hardware.h), so we can do the trick here,
+	// saving the current port value here and just setting the
+	// tick/tock values later on without checking the actual port
+	// state (we know that nobody else will clobber the port in
+	// between)
 	tock = LED_HUB08_S_PORT;
 	tick = tock | LED_HUB08_S_MASK;
 
-	for (uint8_t byte = 0; byte < (LED_MATRIX_WIDTH / 8); byte++) {
+	// do pre-calculate values for setting the red and green
+	// pixels to speedup things later
+	uint8_t all_off = LED_HUB08_DATA_PORT & ~( LED_HUB08_R1_MASK
+	                                           | LED_HUB08_R2_MASK
+	                                           | LED_HUB08_G1_MASK
+	                                           | LED_HUB08_G2_MASK);
+
+	// inner loop: speed!
+	for (uint8_t i = 0; i < (LED_MATRIX_WIDTH/8); i++) {
 
 		// get 8 pixels for the red
 		uint8_t pixels_r1 = *ptr1++;
@@ -118,27 +151,18 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 		uint8_t pixels_g1 = *ptr1++;
 		uint8_t pixels_g2 = *ptr2++;
 
-		// do pre-calculate values for setting the red and green
-		// pixels to speedup things later
-		uint8_t r1on = LED_HUB08_R1_PORT | LED_HUB08_R1_MASK;
-		uint8_t r1off = LED_HUB08_R1_PORT & ~LED_HUB08_R1_MASK;
-		uint8_t r2on = LED_HUB08_R2_PORT | LED_HUB08_R2_MASK;
-		uint8_t r2off = LED_HUB08_R2_PORT & ~LED_HUB08_R2_MASK;
-
-		uint8_t g1on = LED_HUB08_G1_PORT | LED_HUB08_G1_MASK;
-		uint8_t g1off = LED_HUB08_G1_PORT & ~LED_HUB08_G1_MASK;
-		uint8_t g2on = LED_HUB08_G2_PORT | LED_HUB08_G2_MASK;
-		uint8_t g2off = LED_HUB08_G2_PORT & ~LED_HUB08_G2_MASK;
-
 		// we unroll things for speed, use some macros
 #define clock(pulse) LED_HUB08_S_PORT = pulse
-#define do_col_r1(mask) if (pixels_r1 & (mask)) LED_HUB08_R1_PORT = r1on; else LED_HUB08_R1_PORT = r1off
-#define do_col_r2(mask) if (pixels_r2 & (mask)) LED_HUB08_R2_PORT = r2on; else LED_HUB08_R2_PORT = r2off
-#define do_col_g1(mask) if (pixels_g1 & (mask)) LED_HUB08_G1_PORT = g1on; else LED_HUB08_G1_PORT = g1off
-#define do_col_g2(mask) if (pixels_g2 & (mask)) LED_HUB08_G2_PORT = g2on; else LED_HUB08_G2_PORT = g2off
-#define do_col(mask) clock(tick); do_col_r1(mask); do_col_r2(mask); do_col_g1(mask); do_col_g2(mask); clock(tock)
+#define do_col_init() LED_HUB08_DATA_PORT = all_off
+#define do_col_r1(mask) if (pixels_r1 & mask) LED_HUB08_DATA_PORT |= LED_HUB08_R1_MASK
+#define do_col_r2(mask) if (pixels_r2 & mask) LED_HUB08_DATA_PORT |= LED_HUB08_R2_MASK
+#define do_col_g1(mask) if (pixels_g1 & mask) LED_HUB08_DATA_PORT |= LED_HUB08_G1_MASK
+#define do_col_g2(mask) if (pixels_g2 & mask) LED_HUB08_DATA_PORT |= LED_HUB08_G2_MASK
+#define do_col(mask) clock(tick); do_col_init(); do_col_r1(mask); do_col_r2(mask); do_col_g1(mask); do_col_g2(mask); clock(tock)
 
-		// For performance reasons we do use macros and not C loops
+		// For performance reasons we do use macros and not C loops.
+		// We do also hardcode the bit-mask as literal, for the same
+		// reason.
 		do_col(0x80);
 		do_col(0x40);
 		do_col(0x20);
@@ -161,6 +185,7 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 
 	LED_HUB08_L_PORT |= LED_HUB08_L_MASK; // Latch data (H)
 
+	// setup scan lines
 	if(row & 0x1) LED_HUB08_A_PORT |=  LED_HUB08_A_MASK;
 	else          LED_HUB08_A_PORT &= ~LED_HUB08_A_MASK;
 	if(row & 0x2) LED_HUB08_B_PORT |=  LED_HUB08_B_MASK;
@@ -177,6 +202,7 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 
 	// increment row counter
 	if (++row == 16) { // overflow?
+		row = 0; // reset row counter and the pointer
 		ptr1 = matrixbuff;
 	}
 
