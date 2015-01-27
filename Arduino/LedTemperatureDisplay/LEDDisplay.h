@@ -23,6 +23,11 @@
 #define LED_GREEN_COLOR 2
 #define LED_ORANGE_COLOR 3
 
+// Refresh rate of the display (full refresh for all 32 lines)
+// currently the maximum refresh rate is limited by the
+// c-implementation and hardware details at about 850Hz
+#define LED_REFRESH_RATE 100
+
 #define DEBUG 1
 
 // struct for 8 consecutive pixels

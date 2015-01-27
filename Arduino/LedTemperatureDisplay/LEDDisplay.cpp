@@ -52,7 +52,9 @@ void LEDDisplay::begin(bool useTimer) {
 		// hardware timer1 setup: call the ISR at a fixed 100Hz rate
 		TCCR1A  = _BV(WGM11); // Mode 14 (fast PWM), OC1A off
 		TCCR1B  = _BV(WGM13) | _BV(WGM12) | _BV(CS10); // Mode 14, no prescale
-		ICR1    = 8000; // 120Hz
+		// ICR1 = 16MHz / (100Hz * 16) (scanlines) = 10.000
+
+		ICR1 = F_CPU / (16 * LED_REFRESH_RATE);
 
 		TIMSK1 |= _BV(TOIE1); // enable irq for timer1
 		sei();                // enable global irq
@@ -117,6 +119,10 @@ void LEDDisplay::fillScreen(uint16_t color) {
 }
 
 ISR(TIMER1_OVF_vect, ISR_BLOCK) {
+	// to get more accurate timings we do restart the interrupt
+	// handler right away. We know that the next interrupt will not
+	// overlap.
+	TCNT1     = 0; // Restart interrupt timer
 	self->updateDisplay();
 	TIFR1 |= TOV1;
 }
@@ -219,14 +225,12 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	if (++row > 15) { // overflow?
 		row = 0; // reset row counter and the pointer
 		ptr1 = matrixbuff;
+#ifdef DEBUG
+		refresh++;
+#endif
 	}
 
 	buffptr = ptr1; //+= 16; // save the current pointer to buffptr for next irq
-
-	TCNT1     = 0;        // Restart interrupt timer
-#ifdef DEBUG
-	refresh++;
-#endif
 }
 
 void LEDDisplay::setCharCursor(int16_t x, int16_t y) {

@@ -19,7 +19,7 @@ void setup() {
 
 	// setup our LCDDisplay instance
 	display.begin(true);
-	display.setTextColor(LED_RED_COLOR);
+	display.setTextColor(LED_ORANGE_COLOR);
 
 	// for now just a demo screen
 	//                                           12345678901
@@ -30,9 +30,9 @@ void setup() {
 	display.setCharCursor(0,3); display.print(F("25.01 14:42"));
 	//                                          +-----------+
 
-	display.clearScreen();
-	display.fillScreen(LED_ORANGE_COLOR);
-	//display.clearScreen();
+	//	display.clearScreen();
+	// display.fillScreen(LED_ORANGE_COLOR);
+	//display.setBrightness(80);
 }
 
 void loop() {
@@ -43,7 +43,7 @@ void loop() {
 	if ((millis() - lastCountTime) > DISPLAY_REFRESH * 1000) {
 		lastCountTime = millis();
 		Serial.print("refresh/s: ");
-		Serial.println(display.refresh/16/DISPLAY_REFRESH);
+		Serial.println(display.refresh/DISPLAY_REFRESH);
 		display.refresh = 0;
 	}
 #endif
