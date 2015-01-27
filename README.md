@@ -63,6 +63,7 @@ References
 ----------
 
 * [LDP-6432 LCD Matrix Display](http://www.embeddedadventures.com/led_matrix_display_LDP-6432.html)
+* [ATmega32U4 Datasheet](http://www.atmel.com/Images/7766s.pdf)
 * [Adafruit GFX Lib Tutorial](https://learn.adafruit.com/downloads/pdf/adafruit-gfx-graphics-library.pdf)
 * [Adafruit GFX Arduino Library](https://github.com/adafruit/Adafruit-GFX-Library)
 * [Ultrathin LED Matrix Library](https://github.com/Seeed-Studio/Ultrathin_LED_Matrix)
