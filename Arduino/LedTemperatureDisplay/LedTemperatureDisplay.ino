@@ -1,37 +1,21 @@
 #include "LEDDisplay.h"
 #include <Adafruit_GFX.h>
 
+#define DEBUG
+
 LEDDisplay display;
 
 void setup() {
 
-#define DEBUG
-
 	// setup our LCDDisplay instance
 	display.begin(true);
-	display.setTextColor(LED_ORANGE_COLOR);
 
-	// for now just a demo screen
-	//                                           12345678901
-	//                                          +-----------+
-	display.setCharCursor(0,0); display.print(F("34.4° 33.3°"));
-	display.setCharCursor(0,1); display.print(F("  49%   50%"));
-	display.setCharCursor(0,2); display.print(F(" 898p 1030m"));
-	display.setCharCursor(0,3); display.print(F("25.01 14:42"));
-	//                                          +-----------+
-
-	//	display.clearScreen();
-	// display.fillScreen(LED_ORANGE_COLOR);
-	//display.setBrightness(80);
-
-#ifdef DEBUG
-	Serial.begin(9600); // but don't block!
-#endif
-
-
+	// define the timing for the activity LED (1Hz freq., 10% duty ratio)
 #define F_IDLE_LOOP 1
 #define PWM_LED .1
 
+
+	// Setup TIMER3 to drive the activity LED
 #define TIMER_R F_CPU * (1+PWM_LED) / 1024 / F_IDLE_LOOP
 #define CNT_PWM (1.0-PWM_LED) * TIMER_R
 
@@ -41,6 +25,13 @@ void setup() {
 
 	TIMSK3 |= _BV(TOIE3); // enable irq for timer1
 	sei();                // enable global irq
+
+#ifdef DEBUG
+	Serial.begin(9600); while (!Serial);
+	demoScreen();
+	display.dumpScreen();
+#endif
+
 }
 
 ISR(TIMER3_OVF_vect, ISR_BLOCK) {
@@ -48,17 +39,15 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 
 	TCNT3 = led ? CNT_PWM : 0;
 	digitalWrite(LED_BUILTIN, led);
+
 	if (!(led = !led)) {
-		// do stuff F_IDLE_LOOP Hz
-#ifdef DEBUG
-		showLedRefreshRate();
-#endif
+		// do stuff at F_IDLE_LOOP Hz rate
+
 	}
 
 	TIFR3 |= TOV3;
 }
 
-#ifdef DEBUG
 void showLedRefreshRate() {
 	static uint32_t lastTimestamp = 0;
 	uint32_t now = millis();
@@ -71,8 +60,22 @@ void showLedRefreshRate() {
 	display.refresh = 0;
 	lastTimestamp = now;
 }
-#endif
 
 void loop() {
+}
 
+// show some demo screen
+void demoScreen() {
+	uint32_t then = millis();
+	display.setTextColor(LED_RED_COLOR);
+	display.clearScreen();
+	display.setTextWrap(false);
+
+	//                                           1234567890
+	//                                          +-----------+
+	display.setCharCursor(0,0); display.print(F("34.4  33.3"));
+	display.setCharCursor(0,1); display.print(F("  49%  50%"));
+	display.setCharCursor(0,2); display.print(F(" 898 1030m"));
+	display.setCharCursor(0,3); display.print(F("25.1 14:42"));
+	//                                          +-----------+
 }
