@@ -73,7 +73,7 @@ void LEDDisplay::clearScreen() {
 void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 	// for the red and green colors we have two consecutive bytes
-	display_t *segment = matrixbuff + (x/8 + y * LED_MATRIX_WIDTH / 8) * 2;
+	display_t *segment = matrixbuff + (x/8 + y * LED_MATRIX_WIDTH / 8);
 	uint8_t  bit = x % 8;
 
 	switch(color) {
@@ -138,7 +138,6 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK) {
 void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	uint8_t tick, tock;
 	display_t *ptr1, *ptr2;
-
 	ptr1 = (display_t *)buffptr;
 	ptr2 = ptr1 + (16 * LED_MATRIX_WIDTH / 8); // second half of the display
 
