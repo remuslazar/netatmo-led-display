@@ -32,10 +32,14 @@ void LEDDisplay::begin(bool useTimer) {
 	setOutputModeForPortAndMask(LED_HUB08_C_PORT, LED_HUB08_C_MASK);
 	setOutputModeForPortAndMask(LED_HUB08_D_PORT, LED_HUB08_D_MASK);
 
+	setOutputModeForPortAndMask(LED_HUB08_S_PORT, LED_HUB08_S_MASK);
+	LED_HUB08_S_PORT &= ~LED_HUB08_S_MASK; // SCLK signal, idle is low
+
 	setOutputModeForPortAndMask(LED_HUB08_L_PORT, LED_HUB08_L_MASK);
-	LED_HUB08_L_PORT  &= ~LED_HUB08_L_MASK;  // latch is low
+	LED_HUB08_L_PORT &= ~LED_HUB08_L_MASK; // Latch signal, idle is low
+
 	setOutputModeForPortAndMask(LED_HUB08_EN_PORT, LED_HUB08_EN_MASK);
-	LED_HUB08_EN_PORT  |= LED_HUB08_EN_MASK; // disable output
+	LED_HUB08_EN_PORT |= LED_HUB08_EN_MASK; // high = disable display
 
 	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_R1_MASK);
 	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_R2_MASK);
