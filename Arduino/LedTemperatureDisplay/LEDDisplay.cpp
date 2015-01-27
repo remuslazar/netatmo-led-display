@@ -71,19 +71,19 @@ void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 	uint8_t  bit = x % 8;
 
 	switch(color) {
-	case 0: // black (led off)
+	case LED_BLACK_COLOR:
 		*segment++ &= ~(0x80 >> bit);
 		*segment &= ~(0x80 >> bit);
 		break;
-	case 1: // red
+	case LED_RED_COLOR:
 		*segment++ |= 0x80 >> bit;
 		*segment &= ~(0x80 >> bit);
 		break;
-	case 2: // green
+	case LED_GREEN_COLOR:
 		*segment++ &= ~(0x80 >> bit);
 		*segment |= 0x80 >> bit;
 		break;
-	default: // orange
+	default: // LED_ORANGE_COLOR
 		*segment++ |= 0x80 >> bit;
 		*segment |= 0x80 >> bit;
 	}
