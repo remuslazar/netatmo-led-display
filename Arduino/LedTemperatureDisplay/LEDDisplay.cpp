@@ -95,6 +95,21 @@ void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 	}
 }
 
+// dump the screen buffer to the serial console
+void LEDDisplay::dumpScreen() {
+	display_t *segment = matrixbuff;
+	Serial.println(F("   0123456789012345678901234567890123456789012345678901234567890123"));
+	for (uint8_t row = 0; row < LED_MATRIX_HEIGHT ; row++) {
+		Serial.print(row); Serial.print(row < 10 ? F("  ") : F(" "));
+		for (uint8_t col = 0; col < LED_MATRIX_WIDTH; col++) {
+			display_t *segment = matrixbuff + (col/8 + row * LED_MATRIX_WIDTH / 8);
+			uint8_t  bit = col % 8;
+			Serial.print(( (segment->red | segment->green) & (0x80 >> bit)) ? '#' : ' ');
+		}
+		Serial.println();
+	}
+}
+
 void LEDDisplay::fillScreen(uint16_t color) {
 
 	union display_word segment;

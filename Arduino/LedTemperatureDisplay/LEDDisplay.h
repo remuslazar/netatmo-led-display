@@ -66,6 +66,7 @@ class LEDDisplay : public Adafruit_GFX {
 
 	// set the display brightness (0-100%)
 	void setBrightness(uint8_t brightness);
+	void dumpScreen();
 
  private:
 	display_t matrixbuff[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8];
