@@ -177,14 +177,15 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 		// For performance reasons we do use macros and not C loops.
 		// We do also hardcode the bit-mask as literal, for the same
 		// reason.
-		do_col(0x80);
-		do_col(0x40);
-		do_col(0x20);
-		do_col(0x10);
-		do_col(0x08);
-		do_col(0x04);
-		do_col(0x02);
-		do_col(0x01);
+		do_col(_BV(7));
+		do_col(_BV(6));
+		do_col(_BV(5));
+		do_col(_BV(4));
+
+		do_col(_BV(3));
+		do_col(_BV(2));
+		do_col(_BV(1));
+		do_col(_BV(0));
 	}
 
 	// Because the brightness of the display is adjustable using PWM,
