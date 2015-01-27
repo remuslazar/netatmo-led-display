@@ -25,6 +25,19 @@
 
 #define DEBUG 1
 
+// struct for 8 consecutive pixels
+// the MSB being the leftmost pixel
+typedef struct {
+	uint8_t red;
+	uint8_t green;
+} display_t;
+
+// a union helper to be able to do memset
+union display_word {
+	display_t color;
+	uint16_t word;
+};
+
 class LEDDisplay : public Adafruit_GFX {
  public:
 
@@ -50,11 +63,11 @@ class LEDDisplay : public Adafruit_GFX {
 	void setBrightness(uint8_t brightness);
 
  private:
-	uint8_t matrixbuff[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8 * 2]; // red/green = 2 bits
+	display_t matrixbuff[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8];
 
 	// Counters/pointers for interrupt handler:
 	volatile uint8_t row = 0;
-	volatile uint8_t *buffptr;
+	volatile display_t *buffptr;
 	void setOutputModeForPortAndMask(uint8_t port, uint8_t mask);
 
 };

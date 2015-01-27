@@ -71,43 +71,49 @@ void LEDDisplay::clearScreen() {
 void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 	// for the red and green colors we have two consecutive bytes
-	uint8_t *segment = matrixbuff + (x/8 + y * LED_MATRIX_WIDTH / 8) * 2;
+	display_t *segment = matrixbuff + (x/8 + y * LED_MATRIX_WIDTH / 8) * 2;
 	uint8_t  bit = x % 8;
 
 	switch(color) {
 	case LED_BLACK_COLOR:
-		*segment++ &= ~(0x80 >> bit);
-		*segment &= ~(0x80 >> bit);
+		segment->red &= ~(0x80 >> bit);
+		segment->green &= ~(0x80 >> bit);
 		break;
 	case LED_RED_COLOR:
-		*segment++ |= 0x80 >> bit;
-		*segment &= ~(0x80 >> bit);
+		segment->red |= 0x80 >> bit;
+		segment->green &= ~(0x80 >> bit);
 		break;
 	case LED_GREEN_COLOR:
-		*segment++ &= ~(0x80 >> bit);
-		*segment |= 0x80 >> bit;
+		segment->red &= ~(0x80 >> bit);
+		segment->green |= 0x80 >> bit;
 		break;
 	default: // LED_ORANGE_COLOR
-		*segment++ |= 0x80 >> bit;
-		*segment |= 0x80 >> bit;
+		segment->red |= 0x80 >> bit;
+		segment->green |= 0x80 >> bit;
 	}
 }
 
 void LEDDisplay::fillScreen(uint16_t color) {
 
+	union display_word segment;
 	switch (color) {
 	case LED_BLACK_COLOR:
-		memset(matrixbuff, 0, sizeof(matrixbuff));
+		segment.color.red = 0;
+		segment.color.green = 0;
 		break;
 	case LED_RED_COLOR:
-		memset(matrixbuff, 0b10101010, sizeof(matrixbuff));
+		segment.color.red = 0xff;
+		segment.color.green = 0xff;
 		break;
 	case LED_GREEN_COLOR:
-		memset(matrixbuff, 0b01010101, sizeof(matrixbuff));
+		segment.color.red = 0;
+		segment.color.green = 0xff;
 		break;
 	default:
-		memset(matrixbuff, 0b11111111, sizeof(matrixbuff));
+		segment.color.red = 0xff;
+		segment.color.green = 0xff;
 	}
+	memset(matrixbuff, segment.word, sizeof(matrixbuff));
 }
 
 ISR(TIMER1_OVF_vect, ISR_BLOCK) {
@@ -123,10 +129,11 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK) {
 // enough free CPU resources for the main application.
 
 void LEDDisplay::updateDisplay(void) { // @100Hz rate
-	uint8_t tick, tock, *ptr1, *ptr2;
+	uint8_t tick, tock;
+	display_t *ptr1, *ptr2;
 
-	ptr1 = (uint8_t *)buffptr;
-	ptr2 = ptr1 + (16 * LED_MATRIX_WIDTH / 8 * 2); // 2 bits per pixel (2 colors)
+	ptr1 = (display_t *)buffptr;
+	ptr2 = ptr1 + (16 * LED_MATRIX_WIDTH / 8); // second half of the display
 
 	// we know that the S(CLK) port is not used for the data signals
 	// (r1,r2,g1,g2) (see Hardware.h), so we can do the trick here,
@@ -147,21 +154,19 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	// inner loop: speed!
 	for (uint8_t i = 0; i < (LED_MATRIX_WIDTH/8); i++) {
 
-		// get 8 pixels for the red
-		uint8_t pixels_r1 = *ptr1++;
-		uint8_t pixels_r2 = *ptr2++;
+		// get the display_data for first half
+		display_t pixels_1 = *ptr1++;
 
-		// and green color each
-		uint8_t pixels_g1 = *ptr1++;
-		uint8_t pixels_g2 = *ptr2++;
+		// and second half
+		display_t pixels_2 = *ptr2++;
 
 		// we unroll things for speed, use some macros
 #define clock(pulse) LED_HUB08_S_PORT = pulse
 #define do_col_init() LED_HUB08_DATA_PORT = all_off
-#define do_col_r1(mask) if (pixels_r1 & mask) LED_HUB08_DATA_PORT |= LED_HUB08_R1_MASK
-#define do_col_r2(mask) if (pixels_r2 & mask) LED_HUB08_DATA_PORT |= LED_HUB08_R2_MASK
-#define do_col_g1(mask) if (pixels_g1 & mask) LED_HUB08_DATA_PORT |= LED_HUB08_G1_MASK
-#define do_col_g2(mask) if (pixels_g2 & mask) LED_HUB08_DATA_PORT |= LED_HUB08_G2_MASK
+#define do_col_r1(mask) if (pixels_1.red & mask) LED_HUB08_DATA_PORT |= LED_HUB08_R1_MASK
+#define do_col_r2(mask) if (pixels_2.red & mask) LED_HUB08_DATA_PORT |= LED_HUB08_R2_MASK
+#define do_col_g1(mask) if (pixels_1.green & mask) LED_HUB08_DATA_PORT |= LED_HUB08_G1_MASK
+#define do_col_g2(mask) if (pixels_2.green & mask) LED_HUB08_DATA_PORT |= LED_HUB08_G2_MASK
 #define do_col(mask) clock(tick); do_col_init(); do_col_r1(mask); do_col_r2(mask); do_col_g1(mask); do_col_g2(mask); clock(tock)
 
 		// For performance reasons we do use macros and not C loops.
