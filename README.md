@@ -31,15 +31,25 @@ demo).
 Arduino
 -------
 
-This project uses the available LEDMatrix and Adafruit_GXF libraries,
-which are both available for free on Github (see below):
+This project uses the Adafruit_GXF libraries, which is available on
+Github:
 
 ```
 cd ~/Documents/Arduino/libraries/ # your Arduino libraries dir
-git clone https://github.com/Seeed-Studio/Ultrathin_LED_Matrix.git
-git clone https://github.com/PaulStoffregen/TimerThree.git
 git clone https://github.com/adafruit/Adafruit-GFX-Library.git
 ```
+
+Initially the `Ultrathin LED Matrix Library` was considered (see the
+Github-link below). But because of the bad performance and missing
+features (green led was not implemented), the whole hardware related
+stuff was rewritten from scratch and integrated in the `LEDDisplay`
+library, which is bundled with this project (separate library, can be
+used also for other projects as well).
+
+Using the current implementation, the matrix refresh cycles (full
+refresh running on 100Hz) do use only about 12% of the 16MHz CPU,
+leaving enough room for the main application.
+
 
 PCB / Eagle
 -----------
