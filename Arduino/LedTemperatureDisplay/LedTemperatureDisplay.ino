@@ -71,11 +71,15 @@ void demoScreen() {
 	display.clearScreen();
 	display.setTextWrap(false);
 
-	//                                           1234567890
-	//                                          +-----------+
-	display.setCharCursor(0,0); display.print(F("34.4\xf7 33.3"));
-	display.setCharCursor(0,1); display.print(F(" 49%   50%"));
-	display.setCharCursor(0,2); display.print(F(" 898 1030m"));
-	display.setCharCursor(0,3); display.print(F("25.1 14:42"));
-	//                                          +-----------+
+	// left display half
+	display.setCursor(0,0); display.print(F("23.0\xf7"));
+	display.setCursor(0,8); display.print(F(" 54%"));
+	display.setCursor(0,16); display.print(F("2014p"));
+	display.setCursor(0,24); display.print(F("28.1"));
+
+	// right display half
+	display.setCursor(35,0); display.print(F("-1.9\xf7"));
+	display.setCursor(35,8); display.print(F(" 89%"));
+	display.setCursor(35,16); display.print(F("1020m"));
+	display.setCursor(35,24); display.print(F("12:38"));
 }
