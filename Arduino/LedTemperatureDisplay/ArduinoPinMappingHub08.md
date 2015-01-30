@@ -7,7 +7,7 @@ Hub08 Pin | Signal | Arduino Pin
 4         | B      | 10
 6         | C      | 8
 8         | D      | 7
-10        | G1     | 8
+10        | G1     | 4
 12        | G2     | 2
 14        | L      | 1
 16        | S      | 5
