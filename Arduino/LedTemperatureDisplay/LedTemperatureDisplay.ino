@@ -1,8 +1,6 @@
 #include "LEDDisplay.h"
 #include <Adafruit_GFX.h>
 
-#define DEBUG
-
 LEDDisplay display;
 
 void setup() {
@@ -41,13 +39,16 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 
 	if (!(led = !led)) {
 		// do stuff at F_IDLE_LOOP Hz rate
+#ifdef DEBUG
 		if (Serial)
 			showLedRefreshRate();
+#endif
 	}
 
 	TIFR3 |= TOV3;
 }
 
+#ifdef DEBUG
 void showLedRefreshRate() {
 	static uint32_t lastTimestamp = 0;
 	uint32_t now = millis();
@@ -60,6 +61,7 @@ void showLedRefreshRate() {
 	display.refresh = 0;
 	lastTimestamp = now;
 }
+#endif
 
 void loop() {
 }
