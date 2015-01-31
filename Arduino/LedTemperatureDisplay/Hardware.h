@@ -60,4 +60,5 @@
 #define LED_HUB08_G1_MASK _BV(4)
 #define LED_HUB08_G2_MASK _BV(1)
 
+// PD7 / OC4D on 32u4
 #define LED_HUB08_EN_PIN 6
