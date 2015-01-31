@@ -8,7 +8,7 @@ LEDDisplay display;
 void setup() {
 
 	// setup our LCDDisplay instance
-	display.begin(true);
+	display.begin();
 
 	// define the timing for the activity LED (1Hz freq., 10% duty ratio)
 #define F_IDLE_LOOP 1
@@ -29,7 +29,7 @@ void setup() {
 #ifdef DEBUG
 	Serial.begin(9600); while (!Serial);
 	demoScreen();
-	display.dumpScreen();
+	//display.dumpScreen();
 #endif
 
 }
@@ -42,7 +42,7 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 
 	if (!(led = !led)) {
 		// do stuff at F_IDLE_LOOP Hz rate
-
+		showLedRefreshRate();
 	}
 
 	TIFR3 |= TOV3;
@@ -56,6 +56,8 @@ void showLedRefreshRate() {
 	if (Serial) { // if Serial available, print out the refresh rate
 		Serial.print("refresh/s: ");
 		Serial.println(display.refresh/timeElapsed);
+		Serial.print("tcnt4_isr: ");
+		Serial.println(display.tcnt4_isr);
 	}
 	display.refresh = 0;
 	lastTimestamp = now;
@@ -67,7 +69,7 @@ void loop() {
 // show some demo screen
 void demoScreen() {
 	uint32_t then = millis();
-	display.setTextColor(LED_RED_COLOR);
+	display.setTextColor(LED_ORANGE_COLOR);
 	display.clearScreen();
 	display.setTextWrap(false);
 

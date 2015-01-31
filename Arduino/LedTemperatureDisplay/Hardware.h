@@ -13,14 +13,15 @@
   Very important notice
   =====================
 
-  The code (ISR) is heavily optimized for speed, so there are two
+  The code (ISR) is heavily optimized for speed, so there are 3
   constraints:
 
   1) The port used for the S(CLK) signal cannot be used for the
-  R1,R2,G1,G2 signals! Make sure that you use different ports!
+  R1,R2,G1,G2 signals! Make sure that you use different ports.
 
-  2) All Data signals has to be on the same data port (e.g. PORTD)
+  2) All Data signals have to be on the same data port (e.g. PORTD)
 
+  3) EN pin has to be PD7 (Arduino digital pin 6 on Leonardo)
 */
 
 #define LED_HUB08_A_PORT PORTB
@@ -48,10 +49,6 @@
 #define LED_HUB08_S_BIT 6
 #define LED_HUB08_S_DDR DDRC
 
-#define LED_HUB08_EN_PORT PORTD
-#define LED_HUB08_EN_BIT 7
-#define LED_HUB08_EN_DDR DDRD
-
 #define LED_HUB08_DATA_PORT PORTD
 #define LED_HUB08_DATA_DDR DDRD
 
@@ -60,8 +57,10 @@
 #define LED_HUB08_G1_BIT 4
 #define LED_HUB08_G2_BIT 1
 
-// PD7 / OC4D on 32u4
-#define LED_HUB08_EN_PIN 6
+// don't change
+#define LED_HUB08_EN_PORT PORTD
+#define LED_HUB08_EN_BIT 7
+#define LED_HUB08_EN_DDR DDRD
 
 // macros for the bitmasks (don't change)
 #define LED_HUB08_A_MASK _BV(LED_HUB08_A_BIT)

@@ -49,7 +49,7 @@ class LEDDisplay : public Adafruit_GFX {
 	LEDDisplay(void);
 
 	// init
-	void begin(bool useTimer);
+	void begin();
 
 	// we implement this function using the LEDMatrix library
 	void drawPixel(int16_t x, int16_t y, uint16_t color),
@@ -69,6 +69,10 @@ class LEDDisplay : public Adafruit_GFX {
 
 	void dumpScreen();
 
+#ifdef DEBUG
+	int8_t tcnt4_isr;
+#endif
+
  private:
 	display_t matrixbuff[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8];
 
@@ -76,7 +80,6 @@ class LEDDisplay : public Adafruit_GFX {
 	volatile uint8_t row;
 	volatile display_t *buffptr;
 	void setOutputModeForPortAndMask(uint8_t port, uint8_t mask);
-	bool isPwmActive;
 };
 
 #endif
