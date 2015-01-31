@@ -15,36 +15,27 @@ LEDDisplay::LEDDisplay(void) : Adafruit_GFX(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT)
 	self = this; // pointer to the current instance for the ISR
 }
 
-void LEDDisplay::setOutputModeForPortAndMask(uint8_t port, uint8_t mask) {
-	// code borrowed from wiring_digital.c
-	volatile uint8_t *reg, *out;
-	reg = portModeRegister(port);
-	uint8_t oldSREG = SREG;
-	cli();
-	*reg |= mask;
-	SREG = oldSREG;
-}
-
 void LEDDisplay::begin(bool useTimer) {
+	cli(); // disable interrupts for the setup phase
 	// set output mode and initial state for all the pins defined in Hardware.h
-	setOutputModeForPortAndMask(LED_HUB08_A_PORT, LED_HUB08_A_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_B_PORT, LED_HUB08_B_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_C_PORT, LED_HUB08_C_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_D_PORT, LED_HUB08_D_MASK);
+	LED_HUB08_A_DDR |= LED_HUB08_A_MASK;
+	LED_HUB08_B_DDR |= LED_HUB08_B_MASK;
+	LED_HUB08_C_DDR |= LED_HUB08_C_MASK;
+	LED_HUB08_D_DDR |= LED_HUB08_D_MASK;
 
-	setOutputModeForPortAndMask(LED_HUB08_S_PORT, LED_HUB08_S_MASK);
+	LED_HUB08_S_DDR |= LED_HUB08_S_MASK;
 	LED_HUB08_S_PORT &= ~LED_HUB08_S_MASK; // SCLK signal, idle is low
 
-	setOutputModeForPortAndMask(LED_HUB08_L_PORT, LED_HUB08_L_MASK);
+	LED_HUB08_L_DDR |= LED_HUB08_L_MASK;
 	LED_HUB08_L_PORT &= ~LED_HUB08_L_MASK; // Latch signal, idle is low
 
-	setOutputModeForPortAndMask(LED_HUB08_EN_PORT, LED_HUB08_EN_MASK);
+	LED_HUB08_EN_DDR |= LED_HUB08_EN_MASK;
 	LED_HUB08_EN_PORT |= LED_HUB08_EN_MASK; // high = disable display
 
-	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_R1_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_R2_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_G1_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_G2_MASK);
+	LED_HUB08_DATA_DDR |= ( LED_HUB08_R1_MASK |
+	                        LED_HUB08_R2_MASK |
+	                        LED_HUB08_G1_MASK |
+	                        LED_HUB08_G2_MASK );
 
 	buffptr = matrixbuff; // init buffptr (used in the matrix refresh ISR)
 
@@ -57,12 +48,20 @@ void LEDDisplay::begin(bool useTimer) {
 		ICR1 = F_CPU / (16 * LED_REFRESH_RATE);
 
 		TIMSK1 |= _BV(TOIE1); // enable irq for timer1
-		sei();                // enable global irq
 	}
+
+	sei(); // re-enable irq
 }
 
+// The brightnes is controlled by using hardware PWM on the EN signal
 void LEDDisplay::setBrightness(uint8_t brightness) {
-	analogWrite(LED_HUB08_EN_PIN, ciePWM(100-brightness));
+	if (brightness == 100) {
+		digitalWrite(LED_HUB08_EN_PIN, 0);
+		isPwmActive = false;
+	} else {
+		analogWrite(LED_HUB08_EN_PIN, ciePWM(100-brightness));
+		isPwmActive = true;
+	}
 }
 
 void LEDDisplay::clearScreen() {
@@ -216,13 +215,13 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 
 	// Because the brightness of the display is adjustable using PWM,
 	// we can not assume that the display is currently on or off. We
-	// check the current state of the EN output and handle both cases
+	// check the current state of the EN output and handle obth cases
 	// accordingly.
 
-	bool isDisplayActive = LED_HUB08_EN_PORT & LED_HUB08_EN_MASK;
+	// Display is off when EN == 1
+	bool isDisplayOff = LED_HUB08_EN_PORT & LED_HUB08_EN_MASK;
 
-	if (isDisplayActive)
-		LED_HUB08_EN_PORT  |= LED_HUB08_EN_MASK;  // Disable LED output
+	LED_HUB08_EN_PORT |= LED_HUB08_EN_MASK;  // Disable LED output
 
 	LED_HUB08_L_PORT |= LED_HUB08_L_MASK; // Latch data (H)
 
@@ -238,8 +237,10 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 
 	LED_HUB08_L_PORT  &= ~LED_HUB08_L_MASK;;  // Latch down (L)
 
-	if (isDisplayActive)
-		LED_HUB08_EN_PORT  &= ~LED_HUB08_EN_MASK;   // Re-enable output
+	// dont enable output when PWM is active and the display was off
+	// before
+	if (!(isPwmActive && isDisplayOff))
+		LED_HUB08_EN_PORT &= ~LED_HUB08_EN_MASK;
 
 	// increment row counter
 	if (++row > 15) { // overflow?

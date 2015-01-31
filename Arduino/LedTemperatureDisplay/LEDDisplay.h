@@ -64,8 +64,9 @@ class LEDDisplay : public Adafruit_GFX {
 
 	void clearScreen();
 
-	// set the display brightness (0-100%)
+	// Set the display brightness (0-100%)
 	void setBrightness(uint8_t brightness);
+
 	void dumpScreen();
 
  private:
@@ -73,9 +74,9 @@ class LEDDisplay : public Adafruit_GFX {
 
 	// Counters/pointers for interrupt handler:
 	volatile uint8_t row = 0;
-	volatile display_t *buffptr;
+	volatile display_t *buffptr = matrixbuff;
 	void setOutputModeForPortAndMask(uint8_t port, uint8_t mask);
-
+	bool isPwmActive = false;
 };
 
 #endif
