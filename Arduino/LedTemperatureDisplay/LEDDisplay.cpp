@@ -159,6 +159,8 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK) {
 
 void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	uint8_t tick, tock;
+	// we use a local variable here to speed things up (the compiler
+	// being able to use cpu registers)
 	display_t *ptr1, *ptr2;
 	ptr1 = (display_t *)buffptr;
 	ptr2 = ptr1 + (16 * LED_MATRIX_WIDTH / 8); // second half of the display
