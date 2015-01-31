@@ -38,6 +38,8 @@ void LEDDisplay::begin(bool useTimer) {
 	                        LED_HUB08_G2_MASK );
 
 	buffptr = matrixbuff; // init buffptr (used in the matrix refresh ISR)
+	row = 0; // init row counter
+	isPwmActive = false;
 
 	if (useTimer) {
 		// hardware timer1 setup: call the ISR at a fixed 100Hz rate

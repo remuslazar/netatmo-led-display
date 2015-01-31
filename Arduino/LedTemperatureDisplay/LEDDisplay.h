@@ -73,10 +73,10 @@ class LEDDisplay : public Adafruit_GFX {
 	display_t matrixbuff[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8];
 
 	// Counters/pointers for interrupt handler:
-	volatile uint8_t row = 0;
-	volatile display_t *buffptr = matrixbuff;
+	volatile uint8_t row;
+	volatile display_t *buffptr;
 	void setOutputModeForPortAndMask(uint8_t port, uint8_t mask);
-	bool isPwmActive = false;
+	bool isPwmActive;
 };
 
 #endif
