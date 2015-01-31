@@ -22,14 +22,13 @@ void setup() {
 	TCCR3A  = _BV(WGM31) ; // fast PWM, mode 14
 	TCCR3B  = _BV(WGM33) | _BV(WGM32) | _BV(CS30) | _BV(CS32); // clk/1024 prescaler
 	ICR3 = TIMER_R;
-
 	TIMSK3 |= _BV(TOIE3); // enable irq for timer1
-	sei();                // enable global irq
+
+	demoScreen();
 
 #ifdef DEBUG
 	Serial.begin(9600); while (!Serial);
-	demoScreen();
-	//display.dumpScreen();
+	display.dumpScreen();
 #endif
 
 }
@@ -42,7 +41,8 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 
 	if (!(led = !led)) {
 		// do stuff at F_IDLE_LOOP Hz rate
-		showLedRefreshRate();
+		if (Serial)
+			showLedRefreshRate();
 	}
 
 	TIFR3 |= TOV3;
@@ -51,14 +51,12 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 void showLedRefreshRate() {
 	static uint32_t lastTimestamp = 0;
 	uint32_t now = millis();
-	double timeElapsed = (now - lastTimestamp) / 1000.0;
+	float timeElapsed = (now - lastTimestamp) / 1000.0;
 
-	if (Serial) { // if Serial available, print out the refresh rate
-		Serial.print("refresh/s: ");
-		Serial.println(display.refresh/timeElapsed);
-		Serial.print("tcnt4_isr: ");
-		Serial.println(display.tcnt4_isr);
-	}
+	/* Serial.print("refresh/s: "); */
+	/* Serial.println(display.refresh/timeElapsed); */
+	Serial.print("tcnt4_isr: ");
+	Serial.println(display.tcnt4_isr);
 	display.refresh = 0;
 	lastTimestamp = now;
 }
@@ -72,16 +70,21 @@ void demoScreen() {
 	display.setTextColor(LED_ORANGE_COLOR);
 	display.clearScreen();
 	display.setTextWrap(false);
+	display.setFont(FONT_NORMAL);
 
 	// left display half
 	display.setCursor(0,0); display.print(F("23.0\xf7"));
-	display.setCursor(0,8); display.print(F(" 54%"));
-	display.setCursor(0,16); display.print(F("2014p"));
-	display.setCursor(0,24); display.print(F("28.1"));
+	display.setCursor(0,9); display.print(F(" 54%"));
+	display.setCursor(0,18); display.print(F("2014p"));
+	display.setFont(FONT_SMALL_DIGITS);
+	display.setCursor(0,27); display.print(F("28.12.15"));
+	display.setFont(FONT_NORMAL);
 
 	// right display half
 	display.setCursor(35,0); display.print(F("-1.9\xf7"));
-	display.setCursor(35,8); display.print(F(" 89%"));
-	display.setCursor(35,16); display.print(F("1020m"));
-	display.setCursor(35,24); display.print(F("12:38"));
+	display.setCursor(35,9); display.print(F(" 89%"));
+	display.setCursor(35,18); display.print(F("1020m"));
+
+	display.setFont(FONT_SMALL_DIGITS);
+	display.setCursor(37,27); display.print(F("12:38:34"));
 }
