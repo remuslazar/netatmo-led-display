@@ -32,6 +32,8 @@ void LEDDisplay::begin() {
 	LED_HUB08_EN_DDR |= LED_HUB08_EN_MASK;
 	LED_HUB08_EN_PORT |= LED_HUB08_EN_MASK; // high = disable display
 
+	//LED_HUB08_EN_PORT &= ~LED_HUB08_EN_MASK; // test
+
 	LED_HUB08_DATA_DDR |= ( LED_HUB08_R1_MASK |
 	                        LED_HUB08_R2_MASK |
 	                        LED_HUB08_G1_MASK |
@@ -71,8 +73,8 @@ void LEDDisplay::begin() {
 	TCCR4B = _BV(CS41) | _BV(CS42);
 
 	// OC4D pin is PWM, /OC4D pin disconnected
-	TCCR4C |= COM4D1;
-	TCCR4C &= ~COM4D0;
+	//TCCR4C |= COM4D1;
+	//TCCR4C &= ~COM4D0;
 
 	// Fast PWM
 	TCCR4D &= ~(WGM40 | WGM41);
@@ -178,6 +180,7 @@ ISR(TIMER4_OVF_vect, ISR_BLOCK) {
 // enough free CPU resources for the main application.
 
 void LEDDisplay::updateDisplay(void) { // @100Hz rate
+	LED_HUB08_EN_PORT |= LED_HUB08_EN_MASK;  // Disable LED output
 	uint8_t tick, tock;
 	// we use a local variable here to speed things up (the compiler
 	// being able to use cpu registers)
@@ -191,8 +194,8 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	// tick/tock values later on without checking the actual port
 	// state (we know that nobody else will clobber the port in
 	// between)
-	tock = LED_HUB08_S_PORT;
-	tick = tock | LED_HUB08_S_MASK;
+	tock = LED_HUB08_S_PORT | LED_HUB08_S_MASK;
+	tick = LED_HUB08_S_PORT & ~LED_HUB08_S_MASK;
 
 	// do pre-calculate values for setting the red and green
 	// pixels to speedup things later
@@ -245,7 +248,6 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	// Display is off when EN == 1
 	// bool isDisplayOff = LED_HUB08_EN_PORT & LED_HUB08_EN_MASK;
 
-	//LED_HUB08_EN_PORT |= LED_HUB08_EN_MASK;  // Disable LED output
 
 	LED_HUB08_L_PORT |= LED_HUB08_L_MASK; // Latch data (H)
 
@@ -261,7 +263,7 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 
 	LED_HUB08_L_PORT  &= ~LED_HUB08_L_MASK;;  // Latch down (L)
 
-	//LED_HUB08_EN_PORT &= ~LED_HUB08_EN_MASK;
+	LED_HUB08_EN_PORT &= ~LED_HUB08_EN_MASK;
 #ifdef DEBUG
 	tcnt4_isr = TCNT4; // save the timer4 value for debugging
 #endif

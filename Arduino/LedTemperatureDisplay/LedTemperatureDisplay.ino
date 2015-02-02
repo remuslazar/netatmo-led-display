@@ -40,8 +40,8 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 	if (!(led = !led)) {
 		// do stuff at F_IDLE_LOOP Hz rate
 #ifdef DEBUG
-		if (Serial)
-			showLedRefreshRate();
+		//if (Serial)
+			//showLedRefreshRate();
 #endif
 	}
 
@@ -56,8 +56,8 @@ void showLedRefreshRate() {
 
 	/* Serial.print("refresh/s: "); */
 	/* Serial.println(display.refresh/timeElapsed); */
-	Serial.print("tcnt4_isr: ");
-	Serial.println(display.tcnt4_isr);
+	//Serial.print("tcnt4_isr: ");
+	//Serial.println(display.tcnt4_isr);
 	display.refresh = 0;
 	lastTimestamp = now;
 }
@@ -69,24 +69,27 @@ void loop() {
 // show some demo screen
 void demoScreen() {
 	uint32_t then = millis();
-	display.setTextColor(LED_ORANGE_COLOR);
 	display.clearScreen();
 	display.setTextWrap(false);
 	display.setFont(FONT_NORMAL);
 
 	// left display half
+	display.setTextColor(LED_ORANGE_COLOR);
 	display.setCursor(0,0); display.print(F("23.0\xf7"));
 	display.setCursor(0,9); display.print(F(" 54%"));
 	display.setCursor(0,18); display.print(F("2014p"));
 	display.setFont(FONT_SMALL_DIGITS);
+	display.setTextColor(LED_GREEN_COLOR);
 	display.setCursor(0,27); display.print(F("28.12.15"));
-	display.setFont(FONT_NORMAL);
 
 	// right display half
+	display.setFont(FONT_NORMAL);
+	display.setTextColor(LED_RED_COLOR);
 	display.setCursor(35,0); display.print(F("-1.9\xf7"));
 	display.setCursor(35,9); display.print(F(" 89%"));
 	display.setCursor(35,18); display.print(F("1020m"));
 
 	display.setFont(FONT_SMALL_DIGITS);
+	display.setTextColor(LED_GREEN_COLOR);
 	display.setCursor(37,27); display.print(F("12:38:34"));
 }
