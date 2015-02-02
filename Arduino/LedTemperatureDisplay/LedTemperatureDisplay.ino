@@ -37,6 +37,8 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 	TCNT3 = led ? CNT_PWM : 0;
 	digitalWrite(LED_BUILTIN, led);
 
+	TIFR3 |= TOV3; // allow other irqs to be handled
+
 	if (!(led = !led)) {
 		// do stuff at F_IDLE_LOOP Hz rate
 #ifdef DEBUG
@@ -44,8 +46,6 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 			//showLedRefreshRate();
 #endif
 	}
-
-	TIFR3 |= TOV3;
 }
 
 #ifdef DEBUG
