@@ -23,12 +23,7 @@
 #define LED_GREEN_COLOR 2
 #define LED_ORANGE_COLOR 3
 
-// Refresh rate of the display (full refresh for all 32 lines)
-// currently the maximum refresh rate is limited by the
-// c-implementation and hardware details at about 850Hz
-#define LED_REFRESH_RATE 100
-
-#define DEBUG 1
+#define DEBUG
 
 // struct for 8 consecutive pixels
 // the MSB being the leftmost pixel
@@ -49,7 +44,7 @@ class LEDDisplay : public Adafruit_GFX {
 	LEDDisplay(void);
 
 	// init
-	void begin(bool useTimer);
+	void begin();
 
 	// we implement this function using the LEDMatrix library
 	void drawPixel(int16_t x, int16_t y, uint16_t color),
@@ -64,18 +59,22 @@ class LEDDisplay : public Adafruit_GFX {
 
 	void clearScreen();
 
-	// set the display brightness (0-100%)
+	// Set the display brightness (0-100%)
 	void setBrightness(uint8_t brightness);
+
 	void dumpScreen();
+
+#ifdef DEBUG
+	int8_t tcnt4_isr;
+#endif
 
  private:
 	display_t matrixbuff[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8];
 
 	// Counters/pointers for interrupt handler:
-	volatile uint8_t row = 0;
+	volatile uint8_t row;
 	volatile display_t *buffptr;
 	void setOutputModeForPortAndMask(uint8_t port, uint8_t mask);
-
 };
 
 #endif

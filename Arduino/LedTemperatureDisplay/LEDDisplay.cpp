@@ -15,54 +15,79 @@ LEDDisplay::LEDDisplay(void) : Adafruit_GFX(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT)
 	self = this; // pointer to the current instance for the ISR
 }
 
-void LEDDisplay::setOutputModeForPortAndMask(uint8_t port, uint8_t mask) {
-	// code borrowed from wiring_digital.c
-	volatile uint8_t *reg, *out;
-	reg = portModeRegister(port);
-	uint8_t oldSREG = SREG;
-	cli();
-	*reg |= mask;
-	SREG = oldSREG;
-}
-
-void LEDDisplay::begin(bool useTimer) {
+void LEDDisplay::begin() {
+	cli(); // disable interrupts for the setup phase
 	// set output mode and initial state for all the pins defined in Hardware.h
-	setOutputModeForPortAndMask(LED_HUB08_A_PORT, LED_HUB08_A_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_B_PORT, LED_HUB08_B_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_C_PORT, LED_HUB08_C_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_D_PORT, LED_HUB08_D_MASK);
+	LED_HUB08_A_DDR |= LED_HUB08_A_MASK;
+	LED_HUB08_B_DDR |= LED_HUB08_B_MASK;
+	LED_HUB08_C_DDR |= LED_HUB08_C_MASK;
+	LED_HUB08_D_DDR |= LED_HUB08_D_MASK;
 
-	setOutputModeForPortAndMask(LED_HUB08_S_PORT, LED_HUB08_S_MASK);
+	LED_HUB08_S_DDR |= LED_HUB08_S_MASK;
 	LED_HUB08_S_PORT &= ~LED_HUB08_S_MASK; // SCLK signal, idle is low
 
-	setOutputModeForPortAndMask(LED_HUB08_L_PORT, LED_HUB08_L_MASK);
+	LED_HUB08_L_DDR |= LED_HUB08_L_MASK;
 	LED_HUB08_L_PORT &= ~LED_HUB08_L_MASK; // Latch signal, idle is low
 
-	setOutputModeForPortAndMask(LED_HUB08_EN_PORT, LED_HUB08_EN_MASK);
+	LED_HUB08_EN_DDR |= LED_HUB08_EN_MASK;
 	LED_HUB08_EN_PORT |= LED_HUB08_EN_MASK; // high = disable display
 
-	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_R1_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_R2_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_G1_MASK);
-	setOutputModeForPortAndMask(LED_HUB08_DATA_PORT, LED_HUB08_G2_MASK);
+	LED_HUB08_DATA_DDR |= ( LED_HUB08_R1_MASK |
+	                        LED_HUB08_R2_MASK |
+	                        LED_HUB08_G1_MASK |
+	                        LED_HUB08_G2_MASK );
 
 	buffptr = matrixbuff; // init buffptr (used in the matrix refresh ISR)
+	row = 0; // init row counter
 
-	if (useTimer) {
-		// hardware timer1 setup: call the ISR at a fixed 100Hz rate
-		TCCR1A  = _BV(WGM11); // Mode 14 (fast PWM), OC1A off
-		TCCR1B  = _BV(WGM13) | _BV(WGM12) | _BV(CS10); // Mode 14, no prescale
-		// ICR1 = 16MHz / (100Hz * 16) (scanlines) = 10.000
 
-		ICR1 = F_CPU / (16 * LED_REFRESH_RATE);
+	/*
+	  We use the hardware TIMER4 for both the PWM on the OE pin (to
+	  allow brightness control) and for the display refresh ISR. To
+	  avoid collisions with our ISR, we do synchronize the events, so
+	  that we're sure that our ISR isn't running on the duty cycle of
+	  the PWM.
 
-		TIMSK1 |= _BV(TOIE1); // enable irq for timer1
-		sei();                // enable global irq
-	}
+	  The Refresh-Rate of the Display should be about 100Hz to avoid
+	  flickering. Because of the /16 scan, we need a line scan refresh
+	  rate about 16*100Hz = 1.6kHz.
+
+	  A /32 prescaler value leads to a display refresh rate of:
+	  16MHz / 32 (prescaler) / 256 (8-bit counter reg) /
+	  16 (scan lines) = 122Hz, which is quite fine.
+
+	  We also want the ISR to run in the "off" phase of the PWM (when
+	  the display if off anyway, not having to deal with the
+	  enabling/disabling of the display during the ISR and to get more
+	  speed.. So we setup the timer in the "non-inverting compare
+	  output mode" (waveform output is CLEARED on the compare
+	  match). CLEARED because our OE signal is INVERTED.
+
+	*/
+
+	// PWM is on OC4D Pin (arduino pin6 = PD7 on leonardo/yun)
+
+	// /32 prescaler
+	TCCR4B = _BV(CS41) | _BV(CS42);
+
+	// OC4D pin is PWM, /OC4D pin disconnected
+	TCCR4C |= COM4D1;
+	TCCR4C &= ~COM4D0;
+
+	// Fast PWM
+	TCCR4D &= ~(WGM40 | WGM41);
+
+	TIMSK4 |= _BV(TOIE4); // overflow irq enable
+
+	sei(); // re-enable irq
+	setBrightness(100); // max. brightness
 }
 
+// The brightnes is controlled by using hardware PWM on the EN signal
 void LEDDisplay::setBrightness(uint8_t brightness) {
-	analogWrite(LED_HUB08_EN_PIN, ciePWM(100-brightness));
+	int8_t duty = ciePWM(100-brightness);
+	// leave a large enough window for the ISR
+	OCR4D = constrain(duty,35,255);
 }
 
 void LEDDisplay::clearScreen() {
@@ -139,13 +164,9 @@ void LEDDisplay::fillScreen(uint16_t color) {
 	memset(matrixbuff, segment.word, sizeof(matrixbuff));
 }
 
-ISR(TIMER1_OVF_vect, ISR_BLOCK) {
-	// to get more accurate timings we do restart the interrupt
-	// handler right away. We know that the next interrupt will not
-	// overlap.
-	TCNT1     = 0; // Restart interrupt timer
+ISR(TIMER4_OVF_vect, ISR_BLOCK) {
 	self->updateDisplay();
-	TIFR1 |= TOV1;
+	TIFR4 |= TOV4;
 }
 
 // A stock Arduino (Leonardo for example, 16MHz crystal) can handle
@@ -158,6 +179,8 @@ ISR(TIMER1_OVF_vect, ISR_BLOCK) {
 
 void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	uint8_t tick, tock;
+	// we use a local variable here to speed things up (the compiler
+	// being able to use cpu registers)
 	display_t *ptr1, *ptr2;
 	ptr1 = (display_t *)buffptr;
 	ptr2 = ptr1 + (16 * LED_MATRIX_WIDTH / 8); // second half of the display
@@ -216,13 +239,13 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 
 	// Because the brightness of the display is adjustable using PWM,
 	// we can not assume that the display is currently on or off. We
-	// check the current state of the EN output and handle both cases
+	// check the current state of the EN output and handle obth cases
 	// accordingly.
 
-	bool isDisplayActive = LED_HUB08_EN_PORT & LED_HUB08_EN_MASK;
+	// Display is off when EN == 1
+	// bool isDisplayOff = LED_HUB08_EN_PORT & LED_HUB08_EN_MASK;
 
-	if (isDisplayActive)
-		LED_HUB08_EN_PORT  |= LED_HUB08_EN_MASK;  // Disable LED output
+	//LED_HUB08_EN_PORT |= LED_HUB08_EN_MASK;  // Disable LED output
 
 	LED_HUB08_L_PORT |= LED_HUB08_L_MASK; // Latch data (H)
 
@@ -238,8 +261,10 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 
 	LED_HUB08_L_PORT  &= ~LED_HUB08_L_MASK;;  // Latch down (L)
 
-	if (isDisplayActive)
-		LED_HUB08_EN_PORT  &= ~LED_HUB08_EN_MASK;   // Re-enable output
+	//LED_HUB08_EN_PORT &= ~LED_HUB08_EN_MASK;
+#ifdef DEBUG
+	tcnt4_isr = TCNT4; // save the timer4 value for debugging
+#endif
 
 	// increment row counter
 	if (++row > 15) { // overflow?
