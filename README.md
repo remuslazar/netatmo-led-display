@@ -1,6 +1,8 @@
 Netatmo LED Display
 ===================
 
+![LED-Matrix Display in action](http://remuslazar.github.io/netatmo-led-display/images/prototype_static_text.jpg)
+
 Project Goal
 ------------
 
