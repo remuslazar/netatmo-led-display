@@ -1,15 +1,16 @@
 #include "LEDDisplay.h"
 #include "Arduino.h"
-#include "cie1931.h"
 #include <avr/pgmspace.h>
 #include "Hardware.h" // load hardware pin/port mapping
 
-static LEDDisplay *self = NULL;
+#ifndef cbi
+#define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
+#endif
+#ifndef sbi
+#define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+#endif
 
-// returns the psychometric corrected pwm value(0-255) for the given brightness in % (0-100)
-int ciePWM(byte percentage) {
-	return pgm_read_byte_near(cie + constrain(percentage,0,100));
-}
+static LEDDisplay *self = NULL;
 
 LEDDisplay::LEDDisplay(void) : Adafruit_GFX(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT) {
 	self = this; // pointer to the current instance for the ISR
@@ -75,19 +76,21 @@ void LEDDisplay::begin() {
 	// /32 prescaler
 	TCCR4B = _BV(CS41) | _BV(CS42);
 
-	// OC4D pin is PWM, /OC4D pin disconnected
-	TCCR4C |= COM4D1;
-	TCCR4C &= ~COM4D0;
-
-	TCCR4C |= PWM4D; // enable PWM mode for comparator OCR4D
+	sbi(TCCR4C, PWM4D); // enable PWM mode for comparator OCR4D
 
 	// Fast PWM
-	TCCR4D &= ~(WGM40 | WGM41);
+	cbi(TCCR4D, WGM40);
+	cbi(TCCR4D, WGM41);
 
-	TIMSK4 |= _BV(TOIE4); // overflow irq enable
+	// OC4D pin is PWM, /OC4D pin disconnected
+	sbi(TCCR4C, COM4D1);
+	cbi(TCCR4C, COM4D0);
 
-	sei(); // re-enable irq
-	setBrightness(100); // max. brightness
+	sbi(TIMSK4, TOIE4); // overflow irq enable
+
+	sei(); // re-enable
+
+	setBrightness(50); // 50% brightness
 }
 
 void LEDDisplay::commit() {
@@ -98,11 +101,12 @@ boolean LEDDisplay::ready() {
 	return !switchPlaneRequested;
 }
 
-// The brightnes is controlled by using hardware PWM on the EN signal
+// the display brightness is controlled by using hardware PWM on the EN signal
 void LEDDisplay::setBrightness(uint8_t brightness) {
-	int8_t duty = ciePWM(100-brightness);
-	// leave a large enough window for the ISR
-	OCR4D = constrain(duty,35,255);
+	// we know that we need a window for the ISR, where we cannot
+	// enable EN. The minimum OCR4D value is 40 (= max. brightness)
+	uint8_t const minPwmValue = 40;
+	OCR4D = 255-map(min(100,brightness), 0, 100, 0,255-minPwmValue);
 }
 
 void LEDDisplay::clearScreen() {
