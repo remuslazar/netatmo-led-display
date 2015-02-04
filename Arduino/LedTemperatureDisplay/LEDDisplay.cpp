@@ -143,7 +143,7 @@ void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 // dump the screen buffer to the serial console
 void LEDDisplay::dumpScreen() {
-	display_t *segment = matrixbuff[1-fb];
+	display_t *segment = matrixbuff[fb];
 	// for now hardcoded to the width of 64
 	const char header[] PROGMEM = "   0123456789012345678901234567890123456789012345678901234567890123";
 
@@ -151,7 +151,7 @@ void LEDDisplay::dumpScreen() {
 	for (uint8_t row = 0; row < LED_MATRIX_HEIGHT ; row++) {
 	Serial.print(row); Serial.print(row < 10 ? F("  ") : F(" "));
 		for (uint8_t col = 0; col < LED_MATRIX_WIDTH; col++) {
-			display_t *segment = matrixbuff[1-fb] + (col/8 + row * LED_MATRIX_WIDTH / 8);
+			display_t *segment = matrixbuff[fb] + (col/8 + row * LED_MATRIX_WIDTH / 8);
 			uint8_t  bit = col % 8;
 			Serial.print(( (segment->red | segment->green) & (0x80 >> bit)) ? '#' : ' ');
 		}
