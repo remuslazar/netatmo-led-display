@@ -69,6 +69,9 @@ void loop() {
 // show some demo screen
 void demoScreen() {
 	uint32_t then = millis();
+
+	while (!display.ready());
+
 	display.clearScreen();
 	display.setTextWrap(false);
 	display.setFont(FONT_NORMAL);
@@ -92,4 +95,6 @@ void demoScreen() {
 	display.setFont(FONT_SMALL_DIGITS);
 	display.setTextColor(LED_GREEN_COLOR);
 	display.setCursor(37,27); display.print(F("12:38:34"));
+
+	display.commit();
 }

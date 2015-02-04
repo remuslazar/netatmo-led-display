@@ -39,9 +39,12 @@ void LEDDisplay::begin() {
 	                        LED_HUB08_G1_MASK |
 	                        LED_HUB08_G2_MASK );
 
-	buffptr = matrixbuff; // init buffptr (used in the matrix refresh ISR)
+	fb = 0; // reset frame buffer index
+	buffptr = matrixbuff[0]; // init buffptr (used in the matrix refresh ISR)
 	row = 0; // init row counter
 
+	// clear the front buffer
+	memset(matrixbuff[fb], 0, sizeof(matrixbuff[fb]));
 
 	/*
 	  We use the hardware TIMER4 for both the PWM on the OE pin (to
@@ -87,6 +90,14 @@ void LEDDisplay::begin() {
 	setBrightness(100); // max. brightness
 }
 
+void LEDDisplay::commit() {
+	switchPlaneRequested = true;
+}
+
+boolean LEDDisplay::ready() {
+	return !switchPlaneRequested;
+}
+
 // The brightnes is controlled by using hardware PWM on the EN signal
 void LEDDisplay::setBrightness(uint8_t brightness) {
 	int8_t duty = ciePWM(100-brightness);
@@ -95,7 +106,7 @@ void LEDDisplay::setBrightness(uint8_t brightness) {
 }
 
 void LEDDisplay::clearScreen() {
-	memset(matrixbuff, 0, sizeof(matrixbuff));
+	memset(matrixbuff[1-fb], 0, sizeof(matrixbuff[1-fb]));
 }
 
 // 3 colors: 0: off/dark, 1: red, 2: green, 3: orange
@@ -104,7 +115,7 @@ void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 	// boundary check
 	if ((uint16_t)x >= LED_MATRIX_WIDTH || (uint16_t)y >= LED_MATRIX_HEIGHT) return;
 
-	display_t *segment = matrixbuff + ((uint8_t)x/8 + (uint8_t)y * LED_MATRIX_WIDTH / 8);
+	display_t *segment = matrixbuff[1-fb] + ((uint8_t)x/8 + (uint8_t)y * LED_MATRIX_WIDTH / 8);
 	uint8_t bit = x % 8;
 
 	switch(color) {
@@ -128,7 +139,7 @@ void LEDDisplay::drawPixel(int16_t x, int16_t y, uint16_t color) {
 
 // dump the screen buffer to the serial console
 void LEDDisplay::dumpScreen() {
-	display_t *segment = matrixbuff;
+	display_t *segment = matrixbuff[1-fb];
 	// for now hardcoded to the width of 64
 	const char header[] PROGMEM = "   0123456789012345678901234567890123456789012345678901234567890123";
 
@@ -136,7 +147,7 @@ void LEDDisplay::dumpScreen() {
 	for (uint8_t row = 0; row < LED_MATRIX_HEIGHT ; row++) {
 	Serial.print(row); Serial.print(row < 10 ? F("  ") : F(" "));
 		for (uint8_t col = 0; col < LED_MATRIX_WIDTH; col++) {
-			display_t *segment = matrixbuff + (col/8 + row * LED_MATRIX_WIDTH / 8);
+			display_t *segment = matrixbuff[1-fb] + (col/8 + row * LED_MATRIX_WIDTH / 8);
 			uint8_t  bit = col % 8;
 			Serial.print(( (segment->red | segment->green) & (0x80 >> bit)) ? '#' : ' ');
 		}
@@ -165,7 +176,7 @@ void LEDDisplay::fillScreen(uint16_t color) {
 		segment.color.red = 0xff;
 		segment.color.green = 0xff;
 	}
-	memset(matrixbuff, segment.word, sizeof(matrixbuff));
+	memset(matrixbuff[1-fb], segment.word, sizeof(matrixbuff[1-fb]));
 }
 
 ISR(TIMER4_OVF_vect, ISR_BLOCK) {
@@ -262,7 +273,12 @@ void LEDDisplay::updateDisplay(void) { // @100Hz rate
 	// increment row counter
 	if (++row > 15) { // overflow?
 		row = 0; // reset row counter and the pointer
-		ptr1 = matrixbuff;
+		if (switchPlaneRequested) {
+			fb = 1 - fb;
+			switchPlaneRequested = false;
+		}
+		// switch into the front buffer
+		ptr1 = matrixbuff[fb];
 #ifdef DEBUG
 		refresh++;
 #endif

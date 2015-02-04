@@ -68,13 +68,25 @@ class LEDDisplay : public Adafruit_GFX {
 	int8_t tcnt4_isr;
 #endif
 
+	// commit the composite image from the back-buffer to the front
+	// buffer. The switch will be performed asynchronously by the next
+	// display refresh cycle (after max. 50ms) and this flag will be
+	// cleared.
+	void commit();
+
+	boolean ready();
+
  private:
-	display_t matrixbuff[LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8];
+	// use double buffering to prevent tearing
+	display_t matrixbuff[2][LED_MATRIX_WIDTH * LED_MATRIX_HEIGHT / 8];
+
+	// index of the front buffer (visible buffer)
+	volatile uint8_t fb;
+	volatile boolean switchPlaneRequested = false;
 
 	// Counters/pointers for interrupt handler:
 	volatile uint8_t row;
 	volatile display_t *buffptr;
-	void setOutputModeForPortAndMask(uint8_t port, uint8_t mask);
 };
 
 #endif
