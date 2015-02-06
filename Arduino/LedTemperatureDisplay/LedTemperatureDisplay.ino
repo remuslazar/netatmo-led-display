@@ -29,7 +29,7 @@ void setup() {
 	//display.dumpScreen();
 #endif
 
-	display.setBrightness(10);
+	display.setBrightness(50);
 
 }
 
