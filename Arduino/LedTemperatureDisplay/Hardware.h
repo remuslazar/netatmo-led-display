@@ -3,11 +3,15 @@
    for Leonardo/Yun see also:
    http://arduino.cc/en/pmwiki.php?n=Hacking/PinMapping32u4 and
    ArduinoPinMapping32u4.md
-*/
+
+   Caveat: because on the Yun the arduino digital pins 0,1 are used by
+   the Bridge Library (which we're using..), we should avoid them
+
+ */
 
 // setup the mapping used in the hardware schematic:
 // A, B,C,D, L,S, EN,R1,R2,G1,G2
-// 9,10,8,7, 1,5,  6, 0, 3, 4, 2
+// 9,10,8,7,11,5,  6,12, 3, 4, 2
 
 /*
   Very important notice
@@ -21,7 +25,7 @@
 
   2) All Data signals have to be on the same data port (e.g. PORTD)
 
-  3) EN pin has to be PD7 (Arduino digital pin 6 on Leonardo)
+  3) EN pin has to be PD7 (Arduino digital pin 6 on Leonardo/Yun)
 */
 
 #define LED_HUB08_A_PORT PORTB
@@ -41,9 +45,9 @@
 #define LED_HUB08_D_DDR DDRE
 
 
-#define LED_HUB08_L_PORT PORTD
-#define LED_HUB08_L_BIT 3
-#define LED_HUB08_L_DDR DDRD
+#define LED_HUB08_L_PORT PORTB
+#define LED_HUB08_L_BIT 7
+#define LED_HUB08_L_DDR DDRB
 
 #define LED_HUB08_S_PORT PORTC
 #define LED_HUB08_S_BIT 6
@@ -52,7 +56,7 @@
 #define LED_HUB08_DATA_PORT PORTD
 #define LED_HUB08_DATA_DDR DDRD
 
-#define LED_HUB08_R1_BIT 2
+#define LED_HUB08_R1_BIT 6
 #define LED_HUB08_R2_BIT 0
 #define LED_HUB08_G1_BIT 4
 #define LED_HUB08_G2_BIT 1

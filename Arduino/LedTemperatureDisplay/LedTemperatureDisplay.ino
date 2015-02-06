@@ -1,7 +1,18 @@
 #include "LEDDisplay.h"
 #include <Adafruit_GFX.h>
+#include <Process.h>
 
 LEDDisplay display;
+
+struct netatmo_data {
+	boolean valid;
+	float temperature_indoor;
+	float humidity_indoor;
+	float co2_indoor;
+	float temperature_outdoor;
+	float humidity_outdoor;
+	float pressure;
+};
 
 void setup() {
 
@@ -22,14 +33,16 @@ void setup() {
 	ICR3 = TIMER_R;
 	TIMSK3 |= _BV(TOIE3); // enable irq for timer1
 
-	demoScreen();
+	display.setBrightness(50);
+	displayInitScreen();
+
+	// Initialize Bridge
+	Bridge.begin();
 
 #ifdef DEBUG
-	//Serial.begin(9600); while (!Serial);
+	Serial.begin(9600);
 	//display.dumpScreen();
 #endif
-
-	display.setBrightness(50);
 
 }
 
@@ -50,6 +63,132 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 	}
 }
 
+struct netatmo_data getNetatmoData() {
+	struct netatmo_data data;
+	Process p;
+
+#ifdef DEBUG
+	Serial.print(F("fetching netatmo data.. "));
+#endif
+
+	p.begin(F("/root/netatmo-client.py"));
+	p.addParameter(F("-c")); // csv output
+
+	if (p.run() != 0) { // return code != 0
+		data.valid = false;
+#ifdef DEBUG
+		Serial.println(F("error!"));
+#endif
+		return data;
+	}
+
+#ifdef DEBUG
+	Serial.println(F("done!"));
+#endif
+	data.valid = true;
+
+	String s;
+	int i = 0;
+
+	data.temperature_indoor = p.parseFloat();
+	data.humidity_indoor = p.parseFloat();
+	data.pressure = p.parseFloat();
+	data.co2_indoor = p.parseFloat();
+	data.temperature_outdoor = p.parseFloat();
+	data.humidity_outdoor = p.parseFloat();
+
+	return data;
+}
+
+void displayInitScreen() {
+	while (!display.ready());
+	display.clearScreen();
+	display.setTextWrap(true);
+	display.setFont(FONT_NORMAL);
+	display.setCursor(7,12);
+	display.print(F("booting.."));
+	display.commit();
+}
+
+boolean displayNetatmoData() {
+	struct netatmo_data data = getNetatmoData();
+	if (!data.valid) return false;
+
+	while (!display.ready());
+
+	display.clearScreen();
+	display.setTextWrap(false);
+	display.setFont(FONT_NORMAL);
+
+	/*
+	 * left display half
+	 */
+
+	// big font for the temperature display
+	display.setFont(FONT_LARGE_DIGITS);
+
+	// display the temperature indoor without any decimal places (rounded)
+	display.setTextColor(data.temperature_indoor < 15 ? LED_RED_COLOR :
+	                     data.temperature_indoor < 18 ? LED_ORANGE_COLOR :
+	                     data.temperature_indoor < 23 ? LED_GREEN_COLOR :
+	                     data.temperature_indoor < 26 ? LED_ORANGE_COLOR : LED_RED_COLOR);
+	display.setCursor(0,0); display.print(data.temperature_indoor,0); display.print(F("\xf7"));
+
+	// normal font for the remaining infos (orange)
+	display.setFont(FONT_NORMAL);
+	display.setTextColor(LED_ORANGE_COLOR);
+
+	// CO2 indoor
+	// use different colors for specific ranged
+	display.setTextColor(data.co2_indoor < 1000 ? LED_GREEN_COLOR :
+	                     data.co2_indoor < 1500 ? LED_ORANGE_COLOR : LED_RED_COLOR);
+
+	display.setCursor(0,15); display.print(data.co2_indoor,0); display.print('p');
+
+	// reset the color to orange for the remaining infos
+	display.setTextColor(LED_GREEN_COLOR);
+
+	// humidity indoor
+	display.setTextColor(data.humidity_indoor < 30 ? LED_RED_COLOR :
+	                     data.humidity_indoor < 40 ? LED_ORANGE_COLOR :
+	                     data.humidity_indoor < 60 ? LED_GREEN_COLOR :
+	                     data.humidity_indoor < 70 ? LED_ORANGE_COLOR : LED_RED_COLOR);
+	display.setCursor(6,25); display.print(data.humidity_indoor,0); display.print('%');
+
+	/*
+	 * right display half
+	 */
+
+	// big font for the temperature display
+	display.setFont(FONT_LARGE_DIGITS);
+
+	// display the outdoor temperature using one decimal place (23.2)
+	display.setTextColor(data.temperature_outdoor < 0 ? LED_RED_COLOR :
+	                     data.temperature_outdoor < 15 ? LED_ORANGE_COLOR : LED_GREEN_COLOR);
+	display.setCursor(32,0); display.print(data.temperature_outdoor,1); display.print(F("\xf7"));
+
+	// normal font for the remaining infos (orange)
+	display.setFont(FONT_NORMAL);
+	display.setTextColor(LED_GREEN_COLOR);
+
+	// pressure (outdoor = indoor)
+	display.setCursor(35,15); display.print(data.pressure,0); display.print('m');
+	// humidity outdoor
+	display.setTextColor(data.humidity_outdoor < 70 ? LED_GREEN_COLOR :
+	                     data.humidity_outdoor < 85 ? LED_ORANGE_COLOR : LED_RED_COLOR);
+	display.setCursor(35+6,25); display.print(data.humidity_outdoor,0); display.print('%');
+
+	display.commit();
+
+#ifdef DEBUG
+	//while (!display.ready());
+	//display.dumpScreen();
+#endif
+
+	return true;
+}
+
+
 #ifdef DEBUG
 void showLedRefreshRate() {
 	static uint32_t lastTimestamp = 0;
@@ -67,62 +206,11 @@ void showLedRefreshRate() {
 
 void loop() {
 	static uint32_t lastTimestamp = 0;
-	if (millis() - lastTimestamp > 1000) {
+	if (!lastTimestamp || millis() - lastTimestamp > 30 * 1000) { // every 30 seconds
 		lastTimestamp = millis();
-		demoScreen();
-		if (Serial)
-			showLedRefreshRate();
+		if (!displayNetatmoData()) {
+			// something went wrong..
+			lastTimestamp += 10 * 1000; // retry after 10 seconds..
+		}
 	}
-}
-
-// show some demo screen
-void demoScreen() {
-	while (!display.ready());
-
-	display.clearScreen();
-	display.setTextWrap(false);
-	display.setFont(FONT_NORMAL);
-
-	// left display half
-	display.setTextColor(LED_GREEN_COLOR);
-	display.setFont(FONT_LARGE_DIGITS);
-
-	display.setCursor(0,0); display.print(F("23\xf7"));
-	display.setFont(FONT_NORMAL);
-	display.setTextColor(LED_ORANGE_COLOR);
-
-	//display.setCursor(13,8); display.print(F(" 54%"));
-	display.setCursor(0,15); display.print(F("2014p"));
-
-	//display.setFont(FONT_SMALL_DIGITS);
-	display.setTextColor(LED_GREEN_COLOR);
-	display.setCursor(0,25);
-	display.print(F("04"));
-	display.setCursor(10,25);
-	display.print(F("."));
-	display.setCursor(15,25);
-	display.print(F("02"));
-
-	// right display half
-	display.setTextColor(LED_RED_COLOR);
-
-	display.setFont(FONT_LARGE_DIGITS);
-	display.setCursor(32,0); display.print(F("-8.9\xf7"));
-
-	display.setFont(FONT_NORMAL);
-	display.setTextColor(LED_ORANGE_COLOR);
-	//display.setCursor(35,9); display.print(F(" 89%"));
-	display.setCursor(35,15); display.print(F("1020m"));
-
-	//display.setFont(FONT_SMALL_DIGITS);
-	display.setTextColor(LED_GREEN_COLOR);
-#define OFFSET_HOUR_X 37
-	display.setCursor(OFFSET_HOUR_X,25);
-	display.print(F("23"));
-	display.setCursor(OFFSET_HOUR_X+11,25);
-	display.print(F(":"));
-	display.setCursor(OFFSET_HOUR_X+16,25);
-	display.print(F("38"));
-
-	display.commit();
 }
