@@ -3,13 +3,13 @@ Arduino <> Hub08 Pin Mapping
 
 Hub08 Pin | Signal | Arduino Pin
 ----------|--------|------------
-2         | A      | 9
-4         | B      | 10
-6         | C      | 8
-8         | D      | 7
+2         | A      | 8
+4         | B      | 9
+6         | C      | 10
+8         | D      | 11
 10        | G1     | 4
 12        | G2     | 2
-14        | L      | 11
+14        | L      | 7
 16        | S      | 5
 1         | GND    |
 3         | GND    |

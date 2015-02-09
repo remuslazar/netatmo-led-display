@@ -9,9 +9,12 @@
 
  */
 
-// setup the mapping used in the hardware schematic:
-// A, B,C,D, L,S, EN,R1,R2,G1,G2
-// 9,10,8,7,11,5,  6,12, 3, 4, 2
+/* Pin mapping used in the hardware schematic:
+
+   A | B | C | D | L | S |EN |R1 |R2 |G1 |G2
+   --|---|---|---|---|---|---|---|---|---|--
+   8 | 9 |10 |11 | 7 | 5 | 6 |12 | 3 | 4 | 2
+*/
 
 /*
   Very important notice
@@ -21,33 +24,33 @@
   constraints:
 
   1) The port used for the S(CLK) signal cannot be used for the
-  R1,R2,G1,G2 signals! Make sure that you use different ports.
+  R1,R2,G1,G2 (data) signals! Make sure that you use different ports.
 
-  2) All Data signals have to be on the same data port (e.g. PORTD)
+  2) All Data signals have to be on the same data port (e.g. PORTB)
 
   3) EN pin has to be PD7 (Arduino digital pin 6 on Leonardo/Yun)
 */
 
 #define LED_HUB08_A_PORT PORTB
-#define LED_HUB08_A_BIT 5
+#define LED_HUB08_A_BIT 4
 #define LED_HUB08_A_DDR DDRB
 
 #define LED_HUB08_B_PORT PORTB
-#define LED_HUB08_B_BIT 6
+#define LED_HUB08_B_BIT 5
 #define LED_HUB08_B_DDR DDRB
 
 #define LED_HUB08_C_PORT PORTB
-#define LED_HUB08_C_BIT 4
+#define LED_HUB08_C_BIT 6
 #define LED_HUB08_C_DDR DDRB
 
-#define LED_HUB08_D_PORT PORTE
-#define LED_HUB08_D_BIT 6
-#define LED_HUB08_D_DDR DDRE
+#define LED_HUB08_D_PORT PORTB
+#define LED_HUB08_D_BIT 7
+#define LED_HUB08_D_DDR DDRB
 
 
-#define LED_HUB08_L_PORT PORTB
-#define LED_HUB08_L_BIT 7
-#define LED_HUB08_L_DDR DDRB
+#define LED_HUB08_L_PORT PORTE
+#define LED_HUB08_L_BIT 6
+#define LED_HUB08_L_DDR DDRE
 
 #define LED_HUB08_S_PORT PORTC
 #define LED_HUB08_S_BIT 6
