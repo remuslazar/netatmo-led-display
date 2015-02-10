@@ -1,6 +1,9 @@
 #include "LEDDisplay.h"
 #include <Adafruit_GFX.h>
+
+#ifdef YUN
 #include <Process.h>
+#endif
 
 LEDDisplay display;
 
@@ -37,7 +40,9 @@ void setup() {
 	displayInitScreen();
 
 	// Initialize Bridge
+#ifdef YUN
 	Bridge.begin();
+#endif
 
 #ifdef DEBUG
 	Serial.begin(9600);
@@ -65,6 +70,8 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 
 struct netatmo_data getNetatmoData() {
 	struct netatmo_data data;
+
+#ifdef YUN
 	Process p;
 
 #ifdef DEBUG
@@ -81,22 +88,27 @@ struct netatmo_data getNetatmoData() {
 #endif
 		return data;
 	}
-
 #ifdef DEBUG
 	Serial.println(F("done!"));
 #endif
-	data.valid = true;
 
 	String s;
-	int i = 0;
-
 	data.temperature_indoor = p.parseFloat();
 	data.humidity_indoor = p.parseFloat();
 	data.pressure = p.parseFloat();
 	data.co2_indoor = p.parseFloat();
 	data.temperature_outdoor = p.parseFloat();
 	data.humidity_outdoor = p.parseFloat();
+#else
+	data.temperature_indoor = 23.0;
+	data.temperature_outdoor = -2.3;
+	data.co2_indoor = 1200;
+	data.humidity_indoor = 40;
+	data.humidity_outdoor = 60;
+	data.pressure = 1010;
+#endif
 
+	data.valid = true;
 	return data;
 }
 
