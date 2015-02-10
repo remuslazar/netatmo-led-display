@@ -244,12 +244,10 @@ void static inline processLightSensor() {
 	const int sampleRate = BRIGHTNESS_SAMPLE_RATE * 1000; // sample freq := 1/sampleRate
 	const float smoothSamplesNum = BRIGHTNESS_SAMPLES_NUM;
 
-	static uint32_t lastTimestamp = 0;
+	static uint32_t triggerTimestamp = 0;
 	static double smoothedVal = 500; // start with some middle default value
 
-	if (!lastTimestamp || millis() - lastTimestamp > sampleRate) {
-		lastTimestamp = millis();
-
+	if (millis() > triggerTimestamp) {
 		int sensorVal = analogRead(LDR_PIN);
 		smoothedVal += (double)(sensorVal-smoothedVal) / smoothSamplesNum;
 
@@ -266,6 +264,7 @@ void static inline processLightSensor() {
 		Serial.println();
 #endif
 
+		triggerTimestamp = millis() + sampleRate;
 	}
 }
 
@@ -274,12 +273,14 @@ void static inline processLightSensor() {
  */
 
 void static inline processNetatmoRefresh() {
-	static uint32_t lastTimestamp = 0;
-	if (!lastTimestamp || millis() - lastTimestamp > NETATMO_REFRESH_RATE * 1000) { // every 30 seconds
-		lastTimestamp = millis();
-		if (!displayNetatmoData()) {
+	static uint32_t triggerTimestamp = 0;
+	if (millis() > triggerTimestamp) {
+		if (displayNetatmoData()) {
+			// OK: valid data received
+			triggerTimestamp = millis() + NETATMO_REFRESH_RATE * 1000;
+		} else {
 			// something went wrong..
-			lastTimestamp += NETATMO_RETRY_INTERVAL * 1000; // retry after 10 seconds..
+			triggerTimestamp = millis() + NETATMO_RETRY_INTERVAL * 1000;
 		}
 	}
 }
