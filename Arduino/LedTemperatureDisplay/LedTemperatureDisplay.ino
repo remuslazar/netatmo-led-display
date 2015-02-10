@@ -5,6 +5,9 @@
 #include <Process.h>
 #endif
 
+// Which pin is the LDR connected to
+#define LDR_PIN A0
+
 LEDDisplay display;
 
 struct netatmo_data {
@@ -216,7 +219,31 @@ void showLedRefreshRate() {
 }
 #endif
 
+
+void processLightSensor() {
+	const int sample_rate = 2 * 1000; // sample freq := 1/sample_rate
+	const float smooth_factor = .15;
+
+	static uint32_t lastTimestamp = 0;
+	static double ldr = -1;
+	if (!lastTimestamp || millis() - lastTimestamp > sample_rate) { // every sample_rate ms
+		lastTimestamp = millis();
+		int Vd = analogRead(LDR_PIN);
+		if (ldr == -1) {
+			ldr = Vd;
+		} else {
+			double diff = Vd - ldr;
+			ldr += diff * smooth_factor;
+		}
+		Serial.print(F("Vd     = "));Serial.println(Vd);
+		Serial.print(F("Vd(s)  = "));Serial.println(ldr);
+		Serial.print(F("Bright = "));Serial.println(map(ldr,0,1023,0,100));
+		Serial.println();
+	}
+}
+
 void loop() {
+	processLightSensor();
 	static uint32_t lastTimestamp = 0;
 	if (!lastTimestamp || millis() - lastTimestamp > 30 * 1000) { // every 30 seconds
 		lastTimestamp = millis();
