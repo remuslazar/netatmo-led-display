@@ -1,12 +1,48 @@
 #include "LEDDisplay.h"
 #include <Adafruit_GFX.h>
 
-#ifdef YUN
-#include <Process.h>
-#endif
+/**
+ * DEBUG Settings
+ */
+
+#define DEBUG
+
+/*
+ * Dummy-Mode: the bridge will not be initialized and some dummy
+ * environmental data will be used (for development with an Arduino
+ * Leonardo board)
+ */
+
+#define DUMMY_MODE
+
+/**
+ * Some Configuration Options
+ */
 
 // Which pin is the LDR connected to
 #define LDR_PIN A0
+
+// how often (in seconds) should new data be fetched from the NetAtmo
+// server
+#define NETATMO_REFRESH_RATE 30
+
+// retry-interval (in seconds) for fetching data from the server
+#define NETATMO_RETRY_INTERVAL 10
+
+// sample rate (in seconds) for the ldr (light sensor)
+#define BRIGHTNESS_SAMPLE_RATE 5
+
+// # samples for smoothening the raw input value from sensor
+#define BRIGHTNESS_SAMPLES_NUM 8
+
+
+/**
+ * Main Arduino Sketch File
+ */
+
+#ifndef DUMMY_MODE
+#include <Process.h>
+#endif
 
 LEDDisplay display;
 
@@ -25,10 +61,19 @@ void setup() {
 	// setup our LCDDisplay instance
 	display.begin();
 
+	// Initialize Bridge
+#ifndef DUMMY_MODE
+	Bridge.begin();
+#endif
+
+#ifdef DEBUG
+	Serial.begin(9600);
+	//display.dumpScreen();
+#endif
+
 	// define the timing for the activity LED (1Hz freq., 10% duty ratio)
 #define F_IDLE_LOOP 1
 #define PWM_LED .1
-
 
 	// Setup TIMER3 to drive the activity LED
 #define TIMER_R F_CPU * (1+PWM_LED) / 1024 / F_IDLE_LOOP
@@ -39,19 +84,10 @@ void setup() {
 	ICR3 = TIMER_R;
 	TIMSK3 |= _BV(TOIE3); // enable irq for timer1
 
-	display.setBrightness(50);
+	display.setBrightness(50); // set some default brightness (the
+							   // brightness will be adjusted automatically
+							   // according to the light sensor value
 	displayInitScreen();
-
-	// Initialize Bridge
-#ifdef YUN
-	Bridge.begin();
-#endif
-
-#ifdef DEBUG
-	Serial.begin(9600);
-	//display.dumpScreen();
-#endif
-
 }
 
 ISR(TIMER3_OVF_vect, ISR_BLOCK) {
@@ -64,17 +100,13 @@ ISR(TIMER3_OVF_vect, ISR_BLOCK) {
 
 	if (!(led = !led)) {
 		// do stuff at F_IDLE_LOOP Hz rate
-#ifdef DEBUG
-		/* if (Serial) */
-		/* 	showLedRefreshRate(); */
-#endif
 	}
 }
 
-struct netatmo_data getNetatmoData() {
+static inline struct netatmo_data getNetatmoData() {
 	struct netatmo_data data;
 
-#ifdef YUN
+#ifndef DUMMY_MODE
 	Process p;
 
 #ifdef DEBUG
@@ -115,7 +147,7 @@ struct netatmo_data getNetatmoData() {
 	return data;
 }
 
-void displayInitScreen() {
+void static inline displayInitScreen() {
 	while (!display.ready());
 	display.clearScreen();
 	display.setTextWrap(true);
@@ -125,7 +157,7 @@ void displayInitScreen() {
 	display.commit();
 }
 
-boolean displayNetatmoData() {
+boolean static inline displayNetatmoData() {
 	struct netatmo_data data = getNetatmoData();
 	if (!data.valid) return false;
 
@@ -203,53 +235,56 @@ boolean displayNetatmoData() {
 	return true;
 }
 
+/**
+ * Process the data from the LDR sensor and set the display brightness
+ * accordingly
+ */
+
+void static inline processLightSensor() {
+	const int sampleRate = BRIGHTNESS_SAMPLE_RATE * 1000; // sample freq := 1/sampleRate
+	const float smoothSamplesNum = BRIGHTNESS_SAMPLES_NUM;
+
+	static uint32_t lastTimestamp = 0;
+	static double smoothedVal = 500; // start with some middle default value
+
+	if (!lastTimestamp || millis() - lastTimestamp > sampleRate) {
+		lastTimestamp = millis();
+
+		int sensorVal = analogRead(LDR_PIN);
+		smoothedVal += (double)(sensorVal-smoothedVal) / smoothSamplesNum;
+
+		// calculate the brightness value from 0..100
+		uint8_t brightnessValue = map(smoothedVal,0,1023,0,100);
+
+		// set the display brightness accordingly
+		display.setBrightness(brightnessValue);
 
 #ifdef DEBUG
-void showLedRefreshRate() {
-	static uint32_t lastTimestamp = 0;
-	uint32_t now = millis();
-	float timeElapsed = (now - lastTimestamp) / 1000.0;
-
-	/* Serial.print("refresh/s: "); */
-	/* Serial.println(display.refresh/timeElapsed); */
-	Serial.print("tcnt4_isr: ");
-	Serial.println(display.tcnt4_isr);
-	display.refresh = 0;
-	lastTimestamp = now;
-}
+		Serial.print(F("sensorVal     = "));Serial.println(sensorVal);
+		Serial.print(F("smoothedVal   = "));Serial.println(smoothedVal);
+		Serial.print(F("Brightness %  = "));Serial.println(brightnessValue);
+		Serial.println();
 #endif
 
+	}
+}
 
-void processLightSensor() {
-	const int sample_rate = 2 * 1000; // sample freq := 1/sample_rate
-	const float smooth_factor = .15;
+/**
+ * Fetch new data from netatmo and update the display
+ */
 
+void static inline processNetatmoRefresh() {
 	static uint32_t lastTimestamp = 0;
-	static double ldr = -1;
-	if (!lastTimestamp || millis() - lastTimestamp > sample_rate) { // every sample_rate ms
+	if (!lastTimestamp || millis() - lastTimestamp > NETATMO_REFRESH_RATE * 1000) { // every 30 seconds
 		lastTimestamp = millis();
-		int Vd = analogRead(LDR_PIN);
-		if (ldr == -1) {
-			ldr = Vd;
-		} else {
-			double diff = Vd - ldr;
-			ldr += diff * smooth_factor;
+		if (!displayNetatmoData()) {
+			// something went wrong..
+			lastTimestamp += NETATMO_RETRY_INTERVAL * 1000; // retry after 10 seconds..
 		}
-		Serial.print(F("Vd     = "));Serial.println(Vd);
-		Serial.print(F("Vd(s)  = "));Serial.println(ldr);
-		Serial.print(F("Bright = "));Serial.println(map(ldr,0,1023,0,100));
-		Serial.println();
 	}
 }
 
 void loop() {
 	processLightSensor();
-	static uint32_t lastTimestamp = 0;
-	if (!lastTimestamp || millis() - lastTimestamp > 30 * 1000) { // every 30 seconds
-		lastTimestamp = millis();
-		if (!displayNetatmoData()) {
-			// something went wrong..
-			lastTimestamp += 10 * 1000; // retry after 10 seconds..
-		}
-	}
+	processNetatmoRefresh();
 }
